@@ -34,6 +34,10 @@ namespace PATHLY_API.Models
 		[StringLength(20)] // Max length
 		public string PaymentStatus { get; set; } // e.g., "Pending", "Completed", "Refunded"
 
+		[StringLength(50)]
+		public string? TransactionId { get; set; } // Store PayPal transaction ID
+
+
 		public User User { get; set; }
 		public SubscriptionPlan SubscriptionPlan { get; set; }
 

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using PATHLY_API.Data;
 using PATHLY_API.Services;
+using Serilog;
 
 namespace PATHLY_API
 {
@@ -26,6 +27,13 @@ namespace PATHLY_API
 			{
 				options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
 			});
+
+			Log.Logger = new LoggerConfiguration()
+	           .WriteTo.File("logs/payments.log", rollingInterval: RollingInterval.Day)
+	           .CreateLogger();
+
+			builder.Host.UseSerilog();
+
 
 			var app = builder.Build();
 

@@ -1,5 +1,6 @@
 ﻿using PATHLY_API.Data;
 using PATHLY_API.Models;
+using Serilog;
 
 public class PaymentService
 {
@@ -50,7 +51,19 @@ public class PaymentService
 		if (success)
 		{
 			payment.PaymentStatus = "Completed";
+
+			// Activate Subscription
+			var userSubscription = new UserSubscription
+			{
+				UserId = payment.UserId,
+				SubscriptionPlanId = payment.SubscriptionPlanId,
+				StartDate = DateTime.UtcNow,
+				EndDate = DateTime.UtcNow.AddMonths(1) // Example: 1 month subscription
+			};
+			_context.UserSubscriptions.Add(userSubscription);
+
 			await _context.SaveChangesAsync();
+			Log.Information($"Subscription activated for User {payment.UserId}");
 		}
 		else
 		{
@@ -60,4 +73,25 @@ public class PaymentService
 
 		return success;
 	}
+	public async Task<bool> RefundPaymentAsync(int paymentId, string saleId, decimal amount)
+	{
+		var payment = await _context.Payments.FindAsync(paymentId);
+		if (payment == null) throw new KeyNotFoundException("Payment not found.");
+
+		bool success = await _payPalService.RefundPaymentAsync(saleId, amount);
+
+		if (success)
+		{
+			payment.PaymentStatus = "Refunded";
+			await _context.SaveChangesAsync();
+		}
+		else
+		{
+			payment.PaymentStatus = "Refund Failed";
+			await _context.SaveChangesAsync();
+		}
+
+		return success;
+	}
+
 }
