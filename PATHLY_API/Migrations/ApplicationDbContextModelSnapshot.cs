@@ -41,10 +41,9 @@ namespace PATHLY_API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
+                    b.Property<int>("PaymentStatus")
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("ReportTime")
                         .HasColumnType("datetime2");
@@ -125,10 +124,9 @@ namespace PATHLY_API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
+                    b.Property<int>("Role")
                         .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("SubscriptionEndDate")
                         .HasColumnType("datetime2");
@@ -136,15 +134,19 @@ namespace PATHLY_API.Migrations
                     b.Property<DateTime>("SubscriptionStartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("SubscriptionStatus")
-                        .IsRequired()
+                    b.Property<int>("SubscriptionStatus")
                         .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .HasColumnType("int");
 
                     b.Property<int>("TripCount")
                         .HasColumnType("int");
 
+                    b.Property<int>("UserLocationId")
+                        .HasColumnType("int");
+
                     b.HasKey("UserId");
+
+                    b.HasIndex("UserLocationId");
 
                     b.ToTable("Users");
                 });
@@ -166,12 +168,7 @@ namespace PATHLY_API.Migrations
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("UserLocationId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("UserLocations");
                 });
@@ -255,15 +252,15 @@ namespace PATHLY_API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("PATHLY_API.Models.UserLocation", b =>
+            modelBuilder.Entity("PATHLY_API.Models.User", b =>
                 {
-                    b.HasOne("PATHLY_API.Models.User", "User")
-                        .WithMany("UserLocations")
-                        .HasForeignKey("UserId")
+                    b.HasOne("PATHLY_API.Models.UserLocation", "UserLocations")
+                        .WithMany("User")
+                        .HasForeignKey("UserLocationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("UserLocations");
                 });
 
             modelBuilder.Entity("PATHLY_API.Models.UserPreferences", b =>
@@ -305,9 +302,12 @@ namespace PATHLY_API.Migrations
                 {
                     b.Navigation("Payments");
 
-                    b.Navigation("UserLocations");
-
                     b.Navigation("UserPreferences");
+                });
+
+            modelBuilder.Entity("PATHLY_API.Models.UserLocation", b =>
+                {
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using PATHLY_API.Models.Enums;
 
 namespace PATHLY_API.Models
 {
@@ -32,7 +33,7 @@ namespace PATHLY_API.Models
 
 		[Required]
 		[StringLength(20)] // Max length
-		public string PaymentStatus { get; set; } // e.g., "Pending", "Completed", "Refunded"
+		public PaymentStatus PaymentStatus { get; set; }
 
 		[StringLength(50)]
 		public string? TransactionId { get; set; } // Store PayPal transaction ID
@@ -48,7 +49,7 @@ namespace PATHLY_API.Models
 
 		public bool IsPaymentSuccessful()
 		{
-			return PaymentStatus == "Completed";
+			return PaymentStatus == PaymentStatus.Completed;
 		}
 	}
 }

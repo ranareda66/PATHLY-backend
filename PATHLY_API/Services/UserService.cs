@@ -1,5 +1,6 @@
 ﻿using PATHLY_API.Data;
 using PATHLY_API.Models;
+using PATHLY_API.Models.Enums;
 
 namespace PATHLY_API.Services
 {
@@ -52,7 +53,7 @@ namespace PATHLY_API.Services
 			else
 			{
 				// Option 2: Start a new subscription
-				user.SubscriptionStatus = "Active";
+				user.SubscriptionStatus = SubscriptionStatus.Active;
 				user.SubscriptionStartDate = DateTime.UtcNow;
 				user.SubscriptionEndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths);
 			}
@@ -69,13 +70,13 @@ namespace PATHLY_API.Services
 			}
 
 			var validStatuses = new HashSet<string> { "Active", "Inactive", "Canceled", "Trial", "Expired" };
-			if (!validStatuses.Contains(newStatus))
+			if (!Enum.TryParse<SubscriptionStatus>(newStatus, true, out var status))
 			{
 				throw new ArgumentException($"Invalid subscription status: {newStatus}");
 			}
 
 			// Perform business logic
-			user.SubscriptionStatus = newStatus;
+			user.SubscriptionStatus = status;
 
 			// Save changes to the database
 			await _context.SaveChangesAsync();

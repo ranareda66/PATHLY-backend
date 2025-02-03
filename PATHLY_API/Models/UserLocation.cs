@@ -9,9 +9,6 @@ namespace PATHLY_API.Models
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Auto-increment
 		public int UserLocationId { get; set; } // Primary Key
 
-		[ForeignKey("User")]
-		public int UserId { get; set; } // Foreign Key
-
 		[Required]
 		[Column(TypeName = "decimal(9, 6)")] // Precision for latitude
 		public decimal Latitude { get; set; }
@@ -22,7 +19,7 @@ namespace PATHLY_API.Models
 
 		[Required]
 		public DateTime Timestamp { get; set; }
-		public virtual User User { get; set; }
+		public virtual List<User> User { get; set; }
 
 		public string GetLocationInfo()
 		{

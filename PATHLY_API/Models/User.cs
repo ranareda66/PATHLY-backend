@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PATHLY_API.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 
@@ -22,10 +23,10 @@ namespace PATHLY_API.Models
 		public string PasswordHash { get; set; }
 
 		[Required, StringLength(15)]
-		public string Role { get; set; }
+		public UserRole Role { get; set; }
 
 		[Required, StringLength(15)]
-		public string SubscriptionStatus { get; set; }
+		public SubscriptionStatus SubscriptionStatus { get; set; }
 
 		[Required]
 		public DateTime SubscriptionStartDate { get; set; }
@@ -33,12 +34,15 @@ namespace PATHLY_API.Models
 		[Required]
 		public DateTime? SubscriptionEndDate { get; set; }
 
+		[ForeignKey("UserLocations")]
+		public int UserLocationId { get; set; } // Foreign Key
+
 		[Required]
 		public int TripCount { get; set; } = 0; // Default value
 
 		[Required]
 		public int MaxFreeTrips { get; set; } = 3;
-		public virtual List<UserLocation> UserLocations { get; set; }
+		public virtual UserLocation UserLocations { get; set; }
 		public virtual List<Payment> Payments { get; set; }
 		public virtual List<UserPreferences> UserPreferences { get; set; }
 
@@ -49,7 +53,7 @@ namespace PATHLY_API.Models
 
 		public bool IsSubscribed()
 		{
-			return SubscriptionStatus == "Active";
+			return SubscriptionStatus == SubscriptionStatus.Active;
 		}
 	} 
 }
