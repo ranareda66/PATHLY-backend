@@ -1,5 +1,6 @@
 ﻿using PATHLY_API.Data;
 using PATHLY_API.Models;
+using PATHLY_API.Models.Enums;
 using Serilog;
 
 public class PaymentService
@@ -30,7 +31,7 @@ public class PaymentService
 			UserId = userId,
 			SubscriptionPlanId = subscriptionPlanId,
 			Amount = plan.Price,
-			PaymentStatus = "Pending",
+			PaymentStatus = PaymentStatus.Pending,
 			PaymentMethod = "PayPal",
 			PaymentDate = DateTime.UtcNow
 		};
@@ -50,7 +51,7 @@ public class PaymentService
 
 		if (success)
 		{
-			payment.PaymentStatus = "Completed";
+			payment.PaymentStatus = PaymentStatus.Completed;
 
 			// Activate Subscription
 			var userSubscription = new UserSubscription
@@ -67,7 +68,7 @@ public class PaymentService
 		}
 		else
 		{
-			payment.PaymentStatus = "Failed";
+			payment.PaymentStatus = PaymentStatus.Cancelled;
 			await _context.SaveChangesAsync();
 		}
 
@@ -82,12 +83,12 @@ public class PaymentService
 
 		if (success)
 		{
-			payment.PaymentStatus = "Refunded";
+			payment.PaymentStatus = PaymentStatus.Cancelled;
 			await _context.SaveChangesAsync();
 		}
 		else
 		{
-			payment.PaymentStatus = "Refund Failed";
+			payment.PaymentStatus = PaymentStatus.Cancelled;
 			await _context.SaveChangesAsync();
 		}
 
