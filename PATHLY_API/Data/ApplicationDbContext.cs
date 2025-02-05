@@ -3,6 +3,7 @@ using PATHLY_API.Models;
 
 namespace PATHLY_API.Data
 {
+
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext()
@@ -79,3 +80,4 @@ namespace PATHLY_API.Data
         }
     }
 }
+		

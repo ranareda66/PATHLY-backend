@@ -46,11 +46,13 @@ namespace PATHLY_API.Models
 		public virtual List<Payment> Payments { get; set; }
 		public virtual List<UserPreferences> UserPreferences { get; set; }
 
+
         public ICollection<SearchHistory> SearchHistories { get; set; }
         public ICollection<RoadRecommendation> RoadRecommendations { get; set; }
         public ICollection<UserFeedback>? UserFeedbacks { get; set; } = new List<UserFeedback>();
 
-        public bool CheckSubscriptionValidity()
+        
+		public bool CheckSubscriptionValidity()
 		{
 			return DateTime.Now <= SubscriptionEndDate;
 		}
