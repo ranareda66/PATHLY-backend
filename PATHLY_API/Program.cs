@@ -23,7 +23,16 @@ namespace PATHLY_API
 			builder.Services.AddScoped<UserPreferencesService>();
 			builder.Services.AddScoped<PaymentService>();
 			builder.Services.AddScoped<PayPalService>();
+<<<<<<< HEAD
+            builder.Services.AddScoped<RoadService>();
+            builder.Services.AddScoped<RoadRecommendationService>();
+			builder.Services.AddScoped<SearchHistoryService>();
+            builder.Services.AddScoped<UserFeedbackService>();
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+=======
 			builder.Services.AddDbContext<ApplicationDbContext>(options =>
+>>>>>>> 5ff76ae5d40b85190b2deaf6173222ab9211dc6b
 			{
 				options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
 			});
