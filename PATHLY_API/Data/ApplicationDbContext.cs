@@ -28,7 +28,7 @@ namespace PATHLY_API.Data
         {
 
             optionsBuilder.UseSqlServer
-                 (@"Data Source=AHMED\SQLEXPRESS;Initial Catalog=PATHLY;Trusted_Connection=True;Integrated Security=True;Trust Server Certificate=False;");
+                 ("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
 
             base.OnConfiguring(optionsBuilder);
         }

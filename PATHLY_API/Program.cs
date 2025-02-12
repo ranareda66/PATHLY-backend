@@ -28,8 +28,8 @@ namespace PATHLY_API
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
 			{
-				options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
-			});
+                options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
+            });
 
 			Log.Logger = new LoggerConfiguration()
 	           .WriteTo.File("logs/payments.log", rollingInterval: RollingInterval.Day)
