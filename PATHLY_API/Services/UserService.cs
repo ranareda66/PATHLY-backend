@@ -1,6 +1,9 @@
-﻿using PATHLY_API.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PATHLY_API.Data;
 using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
+using PATHLY_API.Dto;
+
 
 namespace PATHLY_API.Services
 {
@@ -8,106 +11,129 @@ namespace PATHLY_API.Services
 	{
 		private readonly ApplicationDbContext _context;
 
-		public UserService(ApplicationDbContext context)
-		{
-			_context = context;
-		}
-		public async Task AbortTripAsync(int userId, int tripId)
-		{
-			var user = await _context.Users.FindAsync(userId);
-			if (user == null)
+		public UserService(ApplicationDbContext context) => _context = context;
+
+        public async Task SubscribeToPlanAsync(int userId, int subscriptionPlanId)
+        {
+            var subscriptionPlan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
+            if (subscriptionPlan == null)
+                throw new ArgumentNullException(nameof(subscriptionPlan), "Subscription plan not found.");
+
+            if (subscriptionPlan.DurationInMonths <= 0) 
+                throw new ArgumentException("Subscription duration must be greater than zero.", nameof(subscriptionPlan.DurationInMonths));
+
+            var user = await _context.Users
+                .Include(u => u.UserSubscriptions)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            var activeSubscription = user.UserSubscriptions
+                .Where(us => us.Status == SubscriptionStatus.Active)
+                .FirstOrDefault();
+
+            if (activeSubscription != null)
+                throw new Exception("User already has an active subscription.");
+
+			var newSubscription = new UserSubscription
 			{
-				throw new Exception("User not found");
-			}
+				UserId = userId,
+				SubscriptionPlanId = subscriptionPlanId,
+				Status = SubscriptionStatus.Active,
+				StartDate = DateTime.UtcNow,
+				EndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths)
+            };
 
-			// Perform business logic
-			user.TripCount--;
+            _context.UserSubscriptions.Add(newSubscription);
+            await _context.SaveChangesAsync();
+        }
 
-			// Save changes to the database
-			await _context.SaveChangesAsync();
-		}
-		public async Task SubscribeToPlanAsync(int userId, SubscriptionPlan subscriptionPlan)
-		{
-			if (subscriptionPlan == null)
-			{
-				throw new ArgumentNullException(nameof(subscriptionPlan), "Subscription plan cannot be null.");
-			}
+        // Update User Data
+        public async Task<bool> UpdateUserAsync(int userId, string newEmail)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return false;
 
-			if (subscriptionPlan.DurationInMonths <= 0)
-			{
-				throw new ArgumentException("Subscription duration must be greater than zero.", nameof(subscriptionPlan.DurationInMonths));
-			}
+            if (user.Email == newEmail) 
+                return false;
 
-			var user = await _context.Users.FindAsync(userId);
-			if (user == null)
-			{
-				throw new Exception("User not found");
-			}
+            user.Email = newEmail;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-			// Check if the user is already subscribed
-			if (user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate > DateTime.UtcNow)
-			{
-				// Option 1: Extend the subscription
-				user.SubscriptionEndDate = user.SubscriptionEndDate.Value.AddMonths(subscriptionPlan.DurationInMonths);
-			}
-			else
-			{
-				// Option 2: Start a new subscription
-				user.SubscriptionStatus = SubscriptionStatus.Active;
-				user.SubscriptionStartDate = DateTime.UtcNow;
-				user.SubscriptionEndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths);
-			}
+        // Change User Password
+        public async Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(oldPassword, user.Password) || BCrypt.Net.BCrypt.Verify(newPassword, user.Password))
+                return false;
 
-			// Save changes to the database
-			await _context.SaveChangesAsync();
-		}
-		public async Task UpdateSubscriptionStatusAsync(int userId, string newStatus)
-		{
-			var user = await _context.Users.FindAsync(userId);
-			if (user == null)
-			{
-				throw new KeyNotFoundException($"User with ID {userId} not found.");
-			}
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-			var validStatuses = new HashSet<string> { "Active", "Inactive", "Canceled", "Trial", "Expired" };
-			if (!Enum.TryParse<SubscriptionStatus>(newStatus, true, out var status))
-			{
-				throw new ArgumentException($"Invalid subscription status: {newStatus}");
-			}
+        // Need to Edit where user can remove his account , but not delete himself from database
+        public async Task<bool> DeleteAccountAsync(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return false;
 
-			// Perform business logic
-			user.SubscriptionStatus = status;
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-			// Save changes to the database
-			await _context.SaveChangesAsync();
-		}
-		public async Task IncrementTripCountAsync(int userId)
-		{
-			var user = await _context.Users.FindAsync(userId);
-			if (user == null)
-			{
-				throw new Exception("User not found");
-			}
+        // Retrieve user's Trip Details
+        public TripDto GetTripDetails(int tripId)
+        {
+            var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
+            if (trip == null)
+                throw new KeyNotFoundException("Trip not found.");
 
-			// Perform business logic
-			user.TripCount++;
+            return new TripDto
+            {
+                Id = trip.Id,
+                StartLocation = trip.StartLocation,
+                EndLocation = trip.EndLocation,
+                Distance = trip.Distance,
+                StartTime = trip.StartTime,
+                EndTime = trip.EndTime,
+                Status = trip.Status,
+            };
+        }
 
-			// Save changes to the database
-			await _context.SaveChangesAsync();
-		}
-		public async Task PauseTripAsync(int userId, int tripId)
-		{
-			var user = await _context.Users.FindAsync(userId);
-			if (user == null)
-			{
-				throw new Exception("User not found");
-			}
+        // Retrieve user's Trip history with filtering and pagination
+        public async Task<List<TripDto>> GetUserTripsAsync(int userId, DateTime? StartTime, TripStatus? status)
+        {
+            var query = _context.Trips.Where(t => t.UserId == userId);
 
-			// Perform business logic (e.g., update trip status)
-			// Note: You'll need a Trip class and repository for this.
+            if (StartTime.HasValue)
+                query = query.Where(t => t.StartTime >= StartTime.Value);
 
-			// Save changes to the database
-			await _context.SaveChangesAsync();
-		}
-	}
+            if (status.HasValue)
+                query = query.Where(t => t.Status == status.Value);
+
+            return await query
+                .OrderByDescending(t => t.StartTime)
+                .Select(t => new TripDto
+                {
+                    Id = t.Id,
+                    StartLocation = t.StartLocation,
+                    EndLocation = t.EndLocation,
+                    StartTime = t.StartTime,
+                    EndTime = t.EndTime,
+                    Distance = t.Distance,
+                    Status = t.Status
+                })
+                .ToListAsync();
+        }
+
+    }
 }

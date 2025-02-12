@@ -19,14 +19,12 @@ namespace PATHLY_API
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 			builder.Services.AddScoped<UserService>();
-			builder.Services.AddScoped<UserLocationService>();
-			builder.Services.AddScoped<UserPreferencesService>();
-			builder.Services.AddScoped<PaymentService>();
+			builder.Services.AddScoped<TripService>();
+			builder.Services.AddScoped<ReportService>();
 			builder.Services.AddScoped<PayPalService>();
-            builder.Services.AddScoped<RoadService>();
-            builder.Services.AddScoped<RoadRecommendationService>();
-			builder.Services.AddScoped<SearchHistoryService>();
-            builder.Services.AddScoped<UserFeedbackService>();
+			builder.Services.AddScoped<SearchService>();
+			builder.Services.AddScoped<PaymentService>();
+			builder.Services.AddScoped<LocationService>();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
 			{
@@ -50,12 +48,8 @@ namespace PATHLY_API
 			}
 
 			app.UseHttpsRedirection();
-
 			app.UseAuthorization();
-
-
 			app.MapControllers();
-
 			app.Run();
 		}
 	}

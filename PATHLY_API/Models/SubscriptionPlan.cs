@@ -7,37 +7,24 @@ namespace PATHLY_API.Models
 	{
 		[Key] 
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
-		public int SubscriptionPlanId { get; set; }
+		public int Id { get; set; }
 
-		[Required] 
-		[StringLength(100)] 
+		[Required , StringLength(100)] 
 		public string PlanName { get; set; }
 
-		[Required]
-		[Column(TypeName = "decimal(18, 2)")] 
+		[Required , Column(TypeName = "decimal(18, 2)")]
 		public decimal Price { get; set; }
 
-		[Required]
-		[StringLength(255)] 
+		[Required , StringLength(255)]
 		public string Description { get; set; }
 
 		[Required]
-		public bool Recurring { get; set; }
-
-		[Required]
-		public int DurationInMonths { get; set; } // Duration in months
-
+		public int DurationInMonths { get; set; }
 		
-		public virtual List<Payment> Payments { get; set; }
+		public Payment Payments { get; set; }
 
-		public string GetPlanInfo()
-		{
-			return $"Plan Name: {PlanName}, Price: {Price}, Description: {Description}, Recurring: {Recurring}, Duration: {DurationInMonths} months";
-		}
+        public List<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>();
 
-		public bool IsRecurring()
-		{
-			return Recurring;
-		}
-	}
+
+    }
 }

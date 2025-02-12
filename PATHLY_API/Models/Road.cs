@@ -1,31 +1,36 @@
 ﻿using PATHLY_API.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using PATHLY_API.Models.Enums;
 
 public class Road
 {
     [Key]
-    public int RoadId { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
 
     [Required]
-    [MaxLength(255)]
-    public string Name { get; set; } = string.Empty; // ✅ Default value
+    public string Start { get; set; }
+    [Required]
+    public string Destination { get; set; }
 
-    [Range(-90, 90)]
-    public decimal Latitude { get; set; }
-
-    [Range(-180, 180)]
-    public decimal Longitude { get; set; }
-
-    public string Conditions { get; set; } = string.Empty; //  Default value
-	public string Region { get; set; } = string.Empty; //  Default value
-
+    [Required]
     public decimal Length { get; set; }
+    [Required]
+    public decimal QualityScore { get; set; }
+
+    public RoadQuality Quality { get; set; }
+
 
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime LastUpdate { get; set; } = DateTime.Now;
+    public DateTime LastUpdate { get; set; } = DateTime.UtcNow;
 
-    // Make Navigation Properties Nullable
-    public ICollection<RoadAnomalies>? RoadAnomalies { get; set; } = new List<RoadAnomalies>();
-    public ICollection<RoadRecommendation>? RoadRecommendations { get; set; } = new List<RoadRecommendation>();
+
+    [Required , ForeignKey("Trip")]
+    public int TripId { get; set; } 
+
+    public Trip Trip { get; set; }
+    public QualityMetric QualityMetric { get; set; }
+    public ICollection<RoadAnomalies> RoadAnomalies { get; set; } = new List<RoadAnomalies>();
+
 }

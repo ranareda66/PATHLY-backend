@@ -4,19 +4,16 @@ using System.ComponentModel.DataAnnotations;
 public class RoadAnomalies
 {
     [Key]
-    public int AnomalieId { get; set; }
-
+    public int Id { get; set; }
     [Required]
-    public int RoadId { get; set; } // Foreign key reference to Road
+    public string Type { get; set; } 
+    public string Severity { get; set; }
 
-    [Required]
-    public string Type { get; set; } = string.Empty; // Default value
+    public string Location { get; set; } 
+    public DateTime DetectionTime { get; set; } = DateTime.UtcNow;
 
-    public string Severity { get; set; } = string.Empty; // Default value
-    public string Location { get; set; } = string.Empty; // Default value
-    public DateTime DetectionTime { get; set; } = DateTime.Now;
+    [Required , ForeignKey("Road")]
+    public int RoadId { get; set; } 
 
-    //Make Navigation Property Nullable
-    [ForeignKey("RoadId")]
-    public Road? Road { get; set; }
+    public Road Road { get; set; }
 }

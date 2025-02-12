@@ -12,30 +12,37 @@ namespace PATHLY_API.Data
         {
         }
         public DbSet<User> Users { get; set; }
-        public DbSet<UserLocation> UserLocations { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
-        public DbSet<UserPreferences> UserPreferences { get; set; }
-        public DbSet<UserSubscription> UserSubscriptions { get; set; }
         public DbSet<Road> Roads { get; set; }
-        public DbSet<SearchHistory> SearchHistories { get; set; }
+        public DbSet<Trip> Trips  { get; set; }
+        public DbSet<Report> Reports { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Image> Images { get; set; }
+        public DbSet<Location> Locations { get; set; }
         public DbSet<RoadAnomalies> RoadAnomalies { get; set; }
-        public DbSet<RoadRecommendation> RoadRecommendations { get; set; }
-        public DbSet<UserFeedback> UserFeedbacks { get; set; }
+        public DbSet<QualityMetric> QualityMetrics { get; set; }
+        public DbSet<Search> Searchs { get; set; }
+        public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+        public DbSet<UserSubscription> UserSubscriptions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
+
+            optionsBuilder.UseSqlServer
+                 (@"Data Source=AHMED\SQLEXPRESS;Initial Catalog=PATHLY;Trusted_Connection=True;Integrated Security=True;Trust Server Certificate=False;");
+
             base.OnConfiguring(optionsBuilder);
         }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // User - User Subscription Relationship
             modelBuilder.Entity<UserSubscription>()
             .HasOne(us => us.User)
             .WithMany()
             .HasForeignKey(us => us.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+            // User Subscription - Subscription Plan Relationship
             modelBuilder.Entity<UserSubscription>()
                 .HasOne(us => us.SubscriptionPlan)
                 .WithMany()
@@ -53,29 +60,40 @@ namespace PATHLY_API.Data
                 .WithOne(a => a.Road)
                 .HasForeignKey(a => a.RoadId);
 
-            // Road - RoadRecommendation Relationship
-            modelBuilder.Entity<Road>()
-                .HasMany(r => r.RoadRecommendations)
-                .WithOne(rr => rr.Road)
-                .HasForeignKey(rr => rr.RoadId);
-
             // User - SearchHistory Relationship
-            modelBuilder.Entity<SearchHistory>()
+            modelBuilder.Entity<Search>()
                 .HasOne(sh => sh.User)
                 .WithMany()
-                .HasForeignKey(sh => sh.UserId);
+                .HasForeignKey(sh => sh.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // User - RoadRecommendation Relationship
-            modelBuilder.Entity<RoadRecommendation>()
-                .HasOne(rr => rr.User)
-                .WithMany()
-                .HasForeignKey(rr => rr.UserId);
-            //User - UserFeedback Relationship
-            modelBuilder.Entity<UserFeedback>()
-               .HasOne(uf => uf.User)
-               .WithMany()
-               .HasForeignKey(uf => uf.UserId)
-               .OnDelete(DeleteBehavior.Cascade);
+            // Trip - Road Relationship
+            modelBuilder.Entity<Trip>()
+                .HasMany(t => t.Roads) 
+                .WithOne(r => r.Trip) 
+                .HasForeignKey(r => r.TripId) 
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Report - Attachment Relationship
+            modelBuilder.Entity<Report>()
+                .HasMany(r => r.Attachments) 
+                .WithOne(a => a.Report) 
+                .HasForeignKey(a => a.ReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User - Report Relationship
+            modelBuilder.Entity<User>()
+                 .HasMany(u => u.Reports) 
+                 .WithOne(r => r.User) 
+                 .HasForeignKey(r => r.UserId) 
+                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Road - QualityMetric Relationship
+            modelBuilder.Entity<Road>()
+                .HasOne(r => r.QualityMetric) 
+                .WithOne(q => q.Road)
+                .OnDelete(DeleteBehavior.Cascade); 
+
         }
     }
 }
