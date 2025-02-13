@@ -32,4 +32,6 @@ public class Road
     public QualityMetric QualityMetric { get; set; }
     public ICollection<RoadAnomalies> RoadAnomalies { get; set; } = new List<RoadAnomalies>();
 
+    public ICollection<TripRoad> TripRoads { get; set; }
+
 }

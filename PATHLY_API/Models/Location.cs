@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PATHLY_API.Models
 {
-	public class Location	
+	public class Location
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; } 
@@ -18,5 +18,7 @@ namespace PATHLY_API.Models
 
         [Required , ForeignKey("User")]
         public int UserId { get; set; }
+        public User User { get; set; }
+
     }
 }

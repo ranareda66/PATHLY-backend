@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using PATHLY_API.Models;
 
 public class RoadAnomalies
 {
@@ -9,7 +10,7 @@ public class RoadAnomalies
     public string Type { get; set; } 
     public string Severity { get; set; }
 
-    public string Location { get; set; } 
+    public Location Location { get; set; } 
 
     [Required , ForeignKey("Road")]
     public int RoadId { get; set; } 

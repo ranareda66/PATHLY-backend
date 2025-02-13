@@ -3,9 +3,9 @@
     public enum RoadQuality
     {
         Excellent,
-        Good,      
-        Fair,      
-        Poor      
+        Good,
+        Fair,
+        Poor
     }
 
 }

@@ -33,5 +33,5 @@ namespace PATHLY_API.Models
 		public SubscriptionPlan SubscriptionPlan { get; set; }
 		public User User { get; set; }
 
-	}
+    }
 }

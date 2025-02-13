@@ -33,11 +33,13 @@ namespace PATHLY_API.Models
 		public int TripCount { get; set; } = 0; 
 
 		public int MaxFreeTrips { get; set; } = 10;
+        public List<Trip> Trips { get; set; }
 		public virtual List<Payment> Payments { get; set; }
-        public ICollection<Search> SearchHistories { get; set; }
-		public ICollection<Report> Reports { get; set; } = new List<Report>();
+        public ICollection<Search> Searchs { get; set; }
+		public ICollection<Report> Reports { get; set; } 
 
-        public List<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>();
+        public UserSubscription UserSubscription { get; set; }
+        public Location Location { get; set; }
     }
 }
 

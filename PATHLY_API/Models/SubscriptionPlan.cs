@@ -22,7 +22,7 @@ namespace PATHLY_API.Models
 		
 		public Payment Payments { get; set; }
 
-        public List<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>();
+        public List<UserSubscription> UserSubscriptions { get; set; }
 
 
     }

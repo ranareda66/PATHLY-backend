@@ -29,6 +29,8 @@ namespace PATHLY_API.Models
         [Required, ForeignKey("User")]
         public int UserId { get; set; }
 
-        public ICollection<Road> Roads { get; set; } = new List<Road>();
+        public User User { get; set; }
+
+        public ICollection<TripRoad> TripRoads { get; set; }
     }
 }

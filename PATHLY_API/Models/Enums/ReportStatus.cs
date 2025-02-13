@@ -2,9 +2,9 @@
 {
     public enum ReportStatus
     {
-        Pending, 
+        Pending,
         Approved,
-        Rejected   
+        Rejected
     }
 
 }

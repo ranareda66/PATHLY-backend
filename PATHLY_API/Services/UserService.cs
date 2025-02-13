@@ -23,20 +23,13 @@ namespace PATHLY_API.Services
                 throw new ArgumentException("Subscription duration must be greater than zero.", nameof(subscriptionPlan.DurationInMonths));
 
             var user = await _context.Users
-                .Include(u => u.UserSubscriptions)
+                .Include(u => u.UserSubscription)
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new Exception("User not found");
 
-            var activeSubscription = user.UserSubscriptions
-                .Where(us => us.Status == SubscriptionStatus.Active)
-                .FirstOrDefault();
-
-            if (activeSubscription != null)
-                throw new Exception("User already has an active subscription.");
-
-			var newSubscription = new UserSubscription
+            var newSubscription = new UserSubscription
 			{
 				UserId = userId,
 				SubscriptionPlanId = subscriptionPlanId,
@@ -50,7 +43,7 @@ namespace PATHLY_API.Services
         }
 
         // Update User Data
-        public async Task<bool> UpdateUserAsync(int userId, string newEmail)
+        public async Task<bool> UpdateDataAsync(int userId, string newEmail)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
