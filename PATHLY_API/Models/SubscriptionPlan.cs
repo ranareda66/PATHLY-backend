@@ -5,12 +5,11 @@ namespace PATHLY_API.Models
 {
 	public class SubscriptionPlan
 	{
-		[Key] 
-		[DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
-		public int Id { get; set; }
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
 
 		[Required , StringLength(100)] 
-		public string PlanName { get; set; }
+		public string Name { get; set; }
 
 		[Required , Column(TypeName = "decimal(18, 2)")]
 		public decimal Price { get; set; }

@@ -6,15 +6,18 @@ namespace PATHLY_API.Models
 {
     public class Report
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required , StringLength(500)]
+        [Required, StringLength(50)]
+        public string ReportType { get; set; }
+
+        [Required, StringLength(500)]
         public string Description { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
 
         [Required, StringLength(15)] 
         public ReportStatus Status { get; set; }

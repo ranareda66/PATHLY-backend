@@ -28,8 +28,10 @@ namespace PATHLY_API.Services
             {
                 Id = report.Id,
                 Description = report.Description,
+                ReportType = report.ReportType,
                 CreatedAt = report.CreatedAt,
-                Status = report.Status
+                Status = report.Status,
+                Attachments = report.Attachments
             };
         }
 
@@ -50,8 +52,11 @@ namespace PATHLY_API.Services
             {
                 Id = report.Id,
                 Description = report.Description,
+                ReportType = report.ReportType,
                 CreatedAt = report.CreatedAt,
-                Status = report.Status
+                Status = report.Status,
+                Attachments = report.Attachments
+
             }).ToList();
         }
 
@@ -69,6 +74,7 @@ namespace PATHLY_API.Services
                 {
                     Id = report.Id,
                     Description = report.Description,
+                    ReportType = report.ReportType,
                     CreatedAt = report.CreatedAt,
                     Status = report.Status,
                     Attachments = report.Attachments
@@ -174,17 +180,6 @@ namespace PATHLY_API.Services
                     Status = t.Status
                 })
                 .ToListAsync();
-        }
-
-        // Generate Report For Number of Users
-        public string GenerateReport(DateTime startDate, DateTime endDate)
-        {
-            var users = _context.Users
-                .Where(u => u.CreatedAt >= startDate && u.CreatedAt <= endDate)
-                .ToList();
-
-            return $"Total Users: {users.Count}, Start Date: {startDate}, End Date: {endDate}";
-
         }
 
         // Add or update road data

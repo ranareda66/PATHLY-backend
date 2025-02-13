@@ -7,9 +7,8 @@ namespace PATHLY_API.Models
 {
 	public class User
 	{
-        [Key] 
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
-		public int Id { get; set; } 
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; } 
 
 		[Required , StringLength(15, MinimumLength = 3)]
 		public string Name { get; set; }
@@ -33,7 +32,6 @@ namespace PATHLY_API.Models
         [Required]
 		public int TripCount { get; set; } = 0; 
 
-		[Required]
 		public int MaxFreeTrips { get; set; } = 10;
 		public virtual List<Payment> Payments { get; set; }
         public ICollection<Search> SearchHistories { get; set; }

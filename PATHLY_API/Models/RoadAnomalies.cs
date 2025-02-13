@@ -3,14 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 public class RoadAnomalies
 {
-    [Key]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
     [Required]
     public string Type { get; set; } 
     public string Severity { get; set; }
 
     public string Location { get; set; } 
-    public DateTime DetectionTime { get; set; } = DateTime.UtcNow;
 
     [Required , ForeignKey("Road")]
     public int RoadId { get; set; } 

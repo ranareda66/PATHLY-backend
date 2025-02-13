@@ -6,9 +6,8 @@ namespace PATHLY_API.Models
 {
 	public class Payment
 	{
-		[Key]
-		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-		public int Id { get; set; }
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
 
 		[Required, Column(TypeName = "decimal(18, 2)")]
 		public decimal Amount { get; set; }

@@ -13,13 +13,14 @@ namespace PATHLY_API.Services
         public ReportService(ApplicationDbContext context) => _context = context;
 
 
-        public async Task<Report> CreateReportAsync(string reportDescription, List<IFormFile> files)
+        public async Task<Report> CreateReportAsync(string reportType, string reportDescription, List<IFormFile> files)
         {
             if (string.IsNullOrWhiteSpace(reportDescription))
                 throw new ArgumentException("Report description cannot be empty.", nameof(reportDescription));
 
             var report = new Report
             {
+                ReportType = reportType.Trim(),
                 Description = reportDescription.Trim(),
                 Status = ReportStatus.Pending,
                 CreatedAt = DateTime.UtcNow
@@ -48,15 +49,15 @@ namespace PATHLY_API.Services
                 Directory.CreateDirectory(uploadsFolder);
 
             string uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            string imagePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            using (var stream = new FileStream(imagePath, FileMode.Create))
                 await file.CopyToAsync(stream);
 
             var image = new Image
             {
                 ReportId = reportId,
-                ImagePath = filePath,
+                ImagePath = imagePath,
                 ImageType = file.ContentType,
                 ImageName = file.FileName,
                 ImageSize = file.Length,

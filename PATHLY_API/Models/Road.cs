@@ -5,8 +5,7 @@ using PATHLY_API.Models.Enums;
 
 public class Road
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     [Required]

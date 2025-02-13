@@ -7,9 +7,8 @@ namespace PATHLY_API.Models
 {
 	public class UserSubscription
     {
-		[Key] 
-		[DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
-		public int Id { get; set; } 
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; } 
 
 		[Required] 
 		public DateTime StartDate { get; set; }

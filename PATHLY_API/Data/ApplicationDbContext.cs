@@ -14,13 +14,13 @@ namespace PATHLY_API.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Road> Roads { get; set; }
         public DbSet<Trip> Trips  { get; set; }
-        public DbSet<Report> Reports { get; set; }
-        public DbSet<Payment> Payments { get; set; }
         public DbSet<Image> Images { get; set; }
+        public DbSet<Report> Reports { get; set; }
+        public DbSet<Search> Searchs { get; set; }
+        public DbSet<Payment> Payments { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<RoadAnomalies> RoadAnomalies { get; set; }
         public DbSet<QualityMetric> QualityMetrics { get; set; }
-        public DbSet<Search> Searchs { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
 
@@ -60,7 +60,7 @@ namespace PATHLY_API.Data
                 .WithOne(a => a.Road)
                 .HasForeignKey(a => a.RoadId);
 
-            // User - SearchHistory Relationship
+            // User - Search Relationship
             modelBuilder.Entity<Search>()
                 .HasOne(sh => sh.User)
                 .WithMany()

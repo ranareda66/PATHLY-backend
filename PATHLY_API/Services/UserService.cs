@@ -99,7 +99,6 @@ namespace PATHLY_API.Services
 
             return new TripDto
             {
-                Id = trip.Id,
                 StartLocation = trip.StartLocation,
                 EndLocation = trip.EndLocation,
                 Distance = trip.Distance,
@@ -124,7 +123,6 @@ namespace PATHLY_API.Services
                 .OrderByDescending(t => t.StartTime)
                 .Select(t => new TripDto
                 {
-                    Id = t.Id,
                     StartLocation = t.StartLocation,
                     EndLocation = t.EndLocation,
                     StartTime = t.StartTime,
