@@ -32,5 +32,85 @@ namespace PATHLY_API.Data
 
             base.OnConfiguring(optionsBuilder);
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Create Composite Key For TripRoad Class
+            modelBuilder.Entity<TripRoad>()
+                .HasKey(tr => new { tr.RoadId, tr.TripId });
+
+            // Ensuring a unique combination of UserId and SubscriptionPlanId
+            modelBuilder.Entity<UserSubscription>()
+            .HasIndex(us => new { us.UserId, us.SubscriptionPlanId })
+            .IsUnique(); // This ensures a user cannot have multiple subscriptions for the same plan
+
+            // User - User Subscription Relationship
+            modelBuilder.Entity<UserSubscription>()
+            .HasOne(us => us.User)
+            .WithMany()
+            .HasForeignKey(us => us.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+
+            // User Subscription - Subscription Plan Relationship
+            modelBuilder.Entity<UserSubscription>()
+                .HasOne(us => us.SubscriptionPlan)
+                .WithMany()
+                .HasForeignKey(us => us.SubscriptionPlanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Road - RoadAnomalies Relationship
+            modelBuilder.Entity<Road>()
+                .HasMany(r => r.RoadAnomalies)
+                .WithOne(a => a.Road)
+                .HasForeignKey(a => a.RoadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // User - Search Relationship
+            modelBuilder.Entity<Search>()
+                .HasOne(sh => sh.User)
+                .WithMany()
+                .HasForeignKey(sh => sh.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            // Trip - TripRoad Relationship
+            modelBuilder.Entity<Trip>()
+                .HasMany(t => t.TripRoads)
+                .WithOne(r => r.Trip)
+                .HasForeignKey(r => r.TripId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Road - TripRoad Relationship
+            modelBuilder.Entity<Road>()
+                .HasMany(t => t.TripRoads)
+                .WithOne(r => r.Road)
+                .HasForeignKey(r => r.RoadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // Report - Attachment Relationship
+            modelBuilder.Entity<Report>()
+                .HasMany(r => r.Attachments)
+                .WithOne(a => a.Report)
+                .HasForeignKey(a => a.ReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            // User - Report Relationship
+            modelBuilder.Entity<User>()
+                 .HasMany(u => u.Reports)
+                 .WithOne(r => r.User)
+                 .HasForeignKey(r => r.UserId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            // Road - QualityMetric Relationship
+            modelBuilder.Entity<Road>()
+                .HasOne(r => r.QualityMetric)
+                .WithOne(q => q.Road)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }
