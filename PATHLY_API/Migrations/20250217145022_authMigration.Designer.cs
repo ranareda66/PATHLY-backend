@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PATHLY_API.Data;
 
@@ -11,9 +12,11 @@ using PATHLY_API.Data;
 namespace PATHLY_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250217145022_authMigration")]
+    partial class authMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -503,8 +506,6 @@ namespace PATHLY_API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User");
-
-                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("PATHLY_API.Models.UserSubscription", b =>
@@ -620,13 +621,6 @@ namespace PATHLY_API.Migrations
                     b.HasIndex("RoadId");
 
                     b.ToTable("RoadAnomalies");
-                });
-
-            modelBuilder.Entity("PATHLY_API.Models.Admin", b =>
-                {
-                    b.HasBaseType("PATHLY_API.Models.User");
-
-                    b.ToTable("Admins", (string)null);
                 });
 
             modelBuilder.Entity("PATHLY_API.Models.Image", b =>
@@ -792,15 +786,6 @@ namespace PATHLY_API.Migrations
                     b.Navigation("Location");
 
                     b.Navigation("Road");
-                });
-
-            modelBuilder.Entity("PATHLY_API.Models.Admin", b =>
-                {
-                    b.HasOne("PATHLY_API.Models.User", null)
-                        .WithOne()
-                        .HasForeignKey("PATHLY_API.Models.Admin", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("PATHLY_API.Models.Report", b =>

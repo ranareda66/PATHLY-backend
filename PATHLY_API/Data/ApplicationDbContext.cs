@@ -1,14 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using PATHLY_API.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace PATHLY_API.Data
 {
-    public class ApplicationDbContext : DbContext
-    {
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, int>
+	{
         public ApplicationDbContext()
         {
         }
-        public ApplicationDbContext(DbContextOptions options) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
         public DbSet<User> Users { get; set; }
@@ -35,8 +37,15 @@ namespace PATHLY_API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Create Composite Key For TripRoad Class
-            modelBuilder.Entity<TripRoad>()
+			modelBuilder.Entity<Admin>().ToTable("Admins");
+
+			// Ensure Identity tables are properly configured to use int keys
+			modelBuilder.Entity<IdentityUserLogin<int>>().HasKey(l => new { l.LoginProvider, l.ProviderKey });
+			modelBuilder.Entity<IdentityUserRole<int>>().HasKey(r => new { r.UserId, r.RoleId });
+			modelBuilder.Entity<IdentityUserToken<int>>().HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
+
+			// Create Composite Key For TripRoad Class
+			modelBuilder.Entity<TripRoad>()
                 .HasKey(tr => new { tr.RoadId, tr.TripId });
 
             // Ensuring a unique combination of UserId and SubscriptionPlanId

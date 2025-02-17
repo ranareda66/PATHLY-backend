@@ -101,7 +101,7 @@ namespace PATHLY_API.Services
             var query = _context.Users.AsNoTracking();
 
             if (!string.IsNullOrEmpty(name))
-                query = query.Where(u => u.Name.Contains(name));
+                query = query.Where(u => u.UserName.Contains(name));
 
             if (!string.IsNullOrEmpty(email))
                 query = query.Where(u => u.Email.Contains(email));
@@ -109,7 +109,7 @@ namespace PATHLY_API.Services
             return await query.Select(user => new UserDto
             {
                 Id = user.Id,
-                Name = user.Name,
+                Name = user.UserName,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
                 IsActive = user.IsActive
@@ -122,7 +122,7 @@ namespace PATHLY_API.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return false;
 
-            user.Name = updatedUser.Name;
+            user.UserName = updatedUser.Name;
             user.Email = updatedUser.Email;
             user.IsActive = updatedUser.IsActive;
 

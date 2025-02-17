@@ -62,10 +62,10 @@ namespace PATHLY_API.Services
         public async Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(oldPassword, user.Password) || BCrypt.Net.BCrypt.Verify(newPassword, user.Password))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash) || BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
                 return false;
 
-            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
             return true;
