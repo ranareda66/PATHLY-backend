@@ -24,6 +24,7 @@ namespace PATHLY_API.Controllers
 
 			var result = await _authService.RegisterAsync(model);
 
+
 			if (!result.IsAuthenticated)
 				return BadRequest(result.Message);
 
@@ -40,8 +41,22 @@ namespace PATHLY_API.Controllers
 
 			if (!result.IsAuthenticated)
 				return BadRequest(result.Message);
+            if (!string.IsNullOrEmpty(result.RefreshToken))
+                SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
 
-			return Ok(result);
+            return Ok(result);
 		}
-	}
+        private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = expires.ToLocalTime(),
+              
+                
+            };
+
+            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+        }
+    }
 }

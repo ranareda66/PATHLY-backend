@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace PATHLY_API.Models
 {
@@ -12,6 +13,8 @@ namespace PATHLY_API.Models
 
 		[Required, StringLength(50)]
 		public string Password { get; set; }
-		public bool IsAdmin { get; set; }
-	}
+
+        [DefaultValue(false)] 
+        public bool IsAdmin { get; set; } = false; 
+    }
 }

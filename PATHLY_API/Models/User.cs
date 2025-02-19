@@ -30,6 +30,7 @@ namespace PATHLY_API.Models
 
         public UserSubscription UserSubscription { get; set; }
         public Location Location { get; set; }
+        public List<RefreshToken>? RefreshTokens { get; set; }
     }
 }
 

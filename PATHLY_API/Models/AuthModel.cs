@@ -1,4 +1,6 @@
-﻿namespace PATHLY_API.Models
+﻿using System.Text.Json.Serialization;
+
+namespace PATHLY_API.Models
 {
 	public class AuthModel
 	{
@@ -7,6 +9,10 @@
 		public string Username { get; set; }
 		public string Email { get; set; }
 		public string Token { get; set; }
-		public DateTime ExpiresOn { get; set; }
-	}
+        //public DateTime ExpiresOn { get; set; }
+        [JsonIgnore]
+        public string? RefreshToken { get; set; }
+
+        public DateTime RefreshTokenExpiration { get; set; }
+    }
 }

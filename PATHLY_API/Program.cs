@@ -16,7 +16,8 @@ namespace PATHLY_API
 	{
 		public static void Main(string[] args)
 		{
-			var builder = WebApplication.CreateBuilder(args);
+            
+            var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
 
@@ -59,8 +60,11 @@ namespace PATHLY_API
 						ValidateLifetime = true,
 						ValidIssuer = builder.Configuration["JWT:Issuer"],
 						ValidAudience = builder.Configuration["JWT:Audience"],
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
-					};
+						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+                        ClockSkew = TimeSpan.Zero
+
+
+                    };
 				});
 
 			Log.Logger = new LoggerConfiguration()
@@ -84,6 +88,7 @@ namespace PATHLY_API
 			app.UseAuthorization();
 			app.MapControllers();
 			app.Run();
+
 		}
 	}
 }
