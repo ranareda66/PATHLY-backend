@@ -64,35 +64,5 @@ public class PayPalService
 		return result.Status == "COMPLETED";
 	}
 
-	//public async Task<bool> RefundPaymentAsync(string saleId, decimal amount)
-	//{
-	//	try
-	//	{
-	//		// Create a RefundRequest
-	//		var refundRequest = new RefundRequest()
-	//		{
-	//			Amount = new PayPalCheckoutSdk.Payments.Money()
-	//			{
-	//				CurrencyCode = "EGP",
-	//				Value = amount.ToString("F2")  // Ensure the amount is formatted to 2 decimal places
-	//			}
-	//		};
-
-	//		var request = new CapturesRefundRequest(saleId);
-	//		request.RequestBody(refundRequest);
-
-	//		// Execute the refund request
-	//		var response = await _client.Execute(request);
-	//		var result = response.Result<PayPalCheckoutSdk.Payments.Refund>();
-
-	//		return result.Status == "completed";  // Check if refund was successful
-	//	}
-	//	catch (Exception ex)
-	//	{
-	//		// Log the exception and return false
-	//		Console.WriteLine($"Error during refund: {ex.Message}");
-	//		return false;
-	//	}
-	//}
 
 }

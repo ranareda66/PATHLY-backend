@@ -9,10 +9,7 @@ namespace PATHLY_API.Controllers
 	{
 		private readonly PaymentService _paymentService;
 
-		public PaymentController(PaymentService paymentService)
-		{
-			_paymentService = paymentService;
-		}
+		public PaymentController(PaymentService paymentService) => _paymentService = paymentService;
 
 		[HttpPost("paypal/create")]
 		public async Task<IActionResult> CreatePayPalPayment([FromBody] PaymentRequest request)

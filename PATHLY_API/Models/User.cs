@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PATHLY_API.Models
 {
-	public class User : IdentityUser<int>
+    public class User : IdentityUser<int>
 	{
         public DateTime CreatedAt { get; set; }
 

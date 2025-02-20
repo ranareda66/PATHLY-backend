@@ -10,9 +10,7 @@ namespace PATHLY_API.Controllers
     public class SecuredController : ControllerBase
     {
         [HttpGet]
-        public IActionResult GetData()
-        {
-            return Ok("Hello from secured controller");
-        }
+        public IActionResult GetData() =>
+            Ok("Hello from secured controller");
     }
 }
