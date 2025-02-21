@@ -2,17 +2,14 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using PATHLY_API.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace PATHLY_API.Data
 {
     public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 	{
-        public ApplicationDbContext()
-        {
-        }
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-        }
+        public ApplicationDbContext() {}
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) {}
         public DbSet<User> Users { get; set; }
         public DbSet<Road> Roads { get; set; }
         public DbSet<Trip> Trips  { get; set; }
@@ -28,9 +25,8 @@ namespace PATHLY_API.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-
-            optionsBuilder.UseSqlServer
-                 ("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
+            //optionsBuilder.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
+            optionsBuilder.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
 
             base.OnConfiguring(optionsBuilder);
         }

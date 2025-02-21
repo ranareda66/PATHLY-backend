@@ -2,20 +2,23 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PATHLY_API.Data;
 using PATHLY_API.JWT;
 using PATHLY_API.Models;
 using PATHLY_API.Services;
+using PATHLY_API.Services.AuthServices;
 using System.Text;
 
 namespace PATHLY_API
 {
-	public class Program
+    public class Program
 	{
 		public static void Main(string[] args)
 		{
-			var builder = WebApplication.CreateBuilder(args);
+            
+            var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
 
@@ -39,6 +42,7 @@ namespace PATHLY_API
 
 			builder.Services.AddDbContext<ApplicationDbContext>(options =>
 			{
+                //options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
                 options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
             });
 
@@ -59,8 +63,11 @@ namespace PATHLY_API
 						ValidateLifetime = true,
 						ValidIssuer = builder.Configuration["JWT:Issuer"],
 						ValidAudience = builder.Configuration["JWT:Audience"],
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
-					};
+						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+                        ClockSkew = TimeSpan.Zero
+
+
+                    };
 				});
 
 
@@ -78,6 +85,7 @@ namespace PATHLY_API
 			app.UseAuthorization();
 			app.MapControllers();
 			app.Run();
+
 		}
 	}
 }

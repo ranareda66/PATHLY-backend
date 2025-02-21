@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PATHLY_API.Models
 {
-	public class User : IdentityUser<int>
+    public class User : IdentityUser<int>
 	{
         public DateTime CreatedAt { get; set; }
 
@@ -30,6 +30,7 @@ namespace PATHLY_API.Models
 
         public UserSubscription UserSubscription { get; set; }
         public Location Location { get; set; }
+        public List<RefreshToken>? RefreshTokens { get; set; }
     }
 }
 
