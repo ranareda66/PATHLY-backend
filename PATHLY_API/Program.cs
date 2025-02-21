@@ -7,7 +7,6 @@ using PATHLY_API.Data;
 using PATHLY_API.JWT;
 using PATHLY_API.Models;
 using PATHLY_API.Services;
-using Serilog;
 using System.Text;
 
 namespace PATHLY_API
@@ -21,6 +20,7 @@ namespace PATHLY_API
 			// Add services to the container.
 
 			builder.Services.Configure<jwt>(builder.Configuration.GetSection("JWT"));
+			builder.Services.Configure<PayPalSettings>(builder.Configuration.GetSection("PayPal"));
 
 			builder.Services.AddControllers();
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -30,9 +30,9 @@ namespace PATHLY_API
 			builder.Services.AddScoped<UserService>();
 			builder.Services.AddScoped<TripService>();
 			builder.Services.AddScoped<ReportService>();
-			builder.Services.AddScoped<PayPalService>();
 			builder.Services.AddScoped<SearchService>();
 			builder.Services.AddScoped<PaymentService>();
+			builder.Services.AddScoped<PayPalService>();
 			builder.Services.AddScoped<LocationService>();
 
 			builder.Services.AddIdentity<User, IdentityRole<int>>().AddEntityFrameworkStores<ApplicationDbContext>();
@@ -62,12 +62,6 @@ namespace PATHLY_API
 						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
 					};
 				});
-
-			Log.Logger = new LoggerConfiguration()
-	           .WriteTo.File("logs/payments.log", rollingInterval: RollingInterval.Day)
-	           .CreateLogger();
-
-			builder.Host.UseSerilog();
 
 
 			var app = builder.Build();

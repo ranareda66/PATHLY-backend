@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PATHLY_API.Dto;
 
 namespace PATHLY_API.Controllers
 {
@@ -14,31 +15,38 @@ namespace PATHLY_API.Controllers
 			_paymentService = paymentService;
 		}
 
-		[HttpPost("paypal/create")]
-		public async Task<IActionResult> CreatePayPalPayment([FromBody] PaymentRequest request)
+		[HttpPost("process-payment")]
+		public async Task<ActionResult<PaymentResponse>> ProcessPayment([FromBody] PaymentRequest request)
 		{
-			string orderId = await _paymentService.ProcessPayPalPaymentAsync(request.UserId, request.SubscriptionPlanId);
-			return Ok(new { orderId });
+			try
+			{
+				var response = await _paymentService.ProcessPayPalPaymentAsync(request.UserId, request.SubscriptionPlanId);
+				return Ok(response);
+			}
+			catch (KeyNotFoundException ex)
+			{
+				return NotFound(ex.Message);
+			}
 		}
 
-		[HttpPost("paypal/capture")]
-		public async Task<IActionResult> CapturePayPalPayment([FromBody] CapturePaymentRequest request)
+		[HttpGet("success")]
+		public async Task<IActionResult> Success([FromQuery] string orderId)
 		{
-			bool success = await _paymentService.CompletePayPalPaymentAsync(request.PaymentId, request.OrderId);
-			return success ? Ok("Payment completed!") : BadRequest("Payment failed.");
+			bool success = await _paymentService.CompletePayPalPaymentAsync(orderId);
+			if (success)
+			{
+				return Redirect("yourapp://payment-success"); // Redirect to Flutter app
+			}
+			else
+			{
+				return Redirect("yourapp://payment-failed"); // Redirect to Flutter app
+			}
 		}
-	}
 
-	public class PaymentRequest
-	{
-		public int UserId { get; set; }
-		public int SubscriptionPlanId { get; set; }
-	}
-
-	public class CapturePaymentRequest
-	{
-		public int PaymentId { get; set; }
-		public string OrderId { get; set; }
+		[HttpGet("cancel")]
+		public IActionResult Cancel()
+		{
+			return Redirect("yourapp://payment-cancelled"); // Redirect to Flutter app
+		}
 	}
 }
-

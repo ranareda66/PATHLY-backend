@@ -1,98 +1,67 @@
-﻿using PayPalCheckoutSdk.Core;
+﻿using Microsoft.Extensions.Options;
+using PATHLY_API.Models;
+using PayPalCheckoutSdk.Core;
 using PayPalCheckoutSdk.Orders;
 using PayPalCheckoutSdk.Payments;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Serilog;
 
-public class PayPalService
+namespace PATHLY_API.Services
 {
-	private readonly PayPalEnvironment _environment;
-	private readonly PayPalHttpClient _client;
-
-	public PayPalService(IConfiguration configuration)
+	public class PayPalService
 	{
-		var clientId = configuration["PayPal:ClientId"];
-		var clientSecret = configuration["PayPal:ClientSecret"];
-		var mode = configuration["PayPal:Mode"];
+		private readonly PayPalHttpClient _client;
 
-		_environment = mode == "live"
-			? new LiveEnvironment(clientId, clientSecret)
-			: new SandboxEnvironment(clientId, clientSecret);
-
-		_client = new PayPalHttpClient(_environment);
-	}
-
-	public async Task<string> CreateOrderAsync(decimal amount)
-	{
-		var orderRequest = new OrderRequest()
+		public PayPalService(IOptions<PayPalSettings> payPal)
 		{
-			CheckoutPaymentIntent = "CAPTURE",
-			PurchaseUnits = new List<PurchaseUnitRequest>()
+			var _payPal = payPal.Value;
+			var environment = new SandboxEnvironment(_payPal.ClientId, _payPal.Secret);
+			_client = new PayPalHttpClient(environment);
+		}
+
+		public async Task<string> CreateOrderAsync(decimal amount, string currency)
+		{
+			var order = new OrderRequest
 			{
-				new PurchaseUnitRequest()
+				CheckoutPaymentIntent = "CAPTURE",
+				ApplicationContext = new ApplicationContext
 				{
-					AmountWithBreakdown = new AmountWithBreakdown()
-					{
-						CurrencyCode = "EGP",
-						Value = amount.ToString("F2")
-					}
-				}
+					ReturnUrl = "https://localhost:7098/api/Payment/success", // Redirect after approval
+					CancelUrl = "https://localhost:7098/api/Payment/cancel"    // Redirect if cancelled
+				},
+				PurchaseUnits = new List<PurchaseUnitRequest>
+			    {
+				   new PurchaseUnitRequest
+				   {
+				       AmountWithBreakdown = new AmountWithBreakdown
+				       {
+				       	  CurrencyCode = currency,
+				       	  Value = amount.ToString("F2") // Format to 2 decimal places
+                       }
+				   }
+			    }
+			};
+
+			var request = new OrdersCreateRequest();
+			request.Prefer("return=representation");
+			request.RequestBody(order);
+
+			var response = await _client.Execute(request);
+			return response.Result<Order>().Id; // Return PayPal Order ID
+		}
+
+		public async Task<bool> CapturePaymentAsync(string orderId)
+		{
+			var request = new OrdersCaptureRequest(orderId);
+			try
+			{
+				var response = await _client.Execute(request);
+				return response.StatusCode == System.Net.HttpStatusCode.OK;
 			}
-		};
-
-		var request = new OrdersCreateRequest();
-		request.Prefer("return=representation");
-		request.RequestBody(orderRequest);
-
-		var response = await _client.Execute(request);
-		var result = response.Result<Order>();
-
-		Log.Information($"PayPal order created: {result.Id}");
-		return result.Id;  // Return the PayPal Order ID
+			catch (PayPalHttp.HttpException ex)
+			{
+				// Log the error for debugging
+				Console.WriteLine($"PayPal API Error: {ex.Message}");
+				throw; 
+			}
+		}
 	}
-
-	public async Task<bool> CapturePaymentAsync(string orderId)
-	{
-		var request = new OrdersCaptureRequest(orderId);
-		request.RequestBody(new OrderActionRequest());
-
-		var response = await _client.Execute(request);
-		var result = response.Result<Order>();
-
-		return result.Status == "COMPLETED";
-	}
-
-	//public async Task<bool> RefundPaymentAsync(string saleId, decimal amount)
-	//{
-	//	try
-	//	{
-	//		// Create a RefundRequest
-	//		var refundRequest = new RefundRequest()
-	//		{
-	//			Amount = new PayPalCheckoutSdk.Payments.Money()
-	//			{
-	//				CurrencyCode = "EGP",
-	//				Value = amount.ToString("F2")  // Ensure the amount is formatted to 2 decimal places
-	//			}
-	//		};
-
-	//		var request = new CapturesRefundRequest(saleId);
-	//		request.RequestBody(refundRequest);
-
-	//		// Execute the refund request
-	//		var response = await _client.Execute(request);
-	//		var result = response.Result<PayPalCheckoutSdk.Payments.Refund>();
-
-	//		return result.Status == "completed";  // Check if refund was successful
-	//	}
-	//	catch (Exception ex)
-	//	{
-	//		// Log the exception and return false
-	//		Console.WriteLine($"Error during refund: {ex.Message}");
-	//		return false;
-	//	}
-	//}
-
 }

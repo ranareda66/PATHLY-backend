@@ -1,8 +1,10 @@
-﻿using PATHLY_API.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PATHLY_API.Data;
 using PATHLY_API.Dto;
 using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
-using Serilog;
+using PATHLY_API.Services;
+using System.Threading.Tasks;
 
 public class PaymentService
 {
@@ -15,7 +17,7 @@ public class PaymentService
 		_payPalService = payPalService;
 	}
 
-	public async Task<string> ProcessPayPalPaymentAsync(int userId, int subscriptionPlanId)
+	public async Task<PaymentResponse> ProcessPayPalPaymentAsync(int userId, int subscriptionPlanId)
 	{
 		var user = await _context.Users.FindAsync(userId);
 		var plan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
@@ -24,7 +26,7 @@ public class PaymentService
 			throw new KeyNotFoundException("User or Subscription Plan not found.");
 
 		// Create PayPal order
-		string orderId = await _payPalService.CreateOrderAsync(plan.Price);
+		string orderId = await _payPalService.CreateOrderAsync(plan.Price, "USD");
 
 		// Store payment in database as "Pending"
 		var payment = new Payment
@@ -34,64 +36,64 @@ public class PaymentService
 			Amount = plan.Price,
 			PaymentStatus = PaymentStatus.Pending,
 			PaymentMethod = "PayPal",
-			PaymentDate = DateTime.UtcNow
+			PaymentDate = DateTime.UtcNow,
+			TransactionId = orderId // Store PayPal Order ID
 		};
 
 		_context.Payments.Add(payment);
 		await _context.SaveChangesAsync();
 
-		return orderId;  // Return PayPal Order ID
+		// Return PayPal Order ID and Approval URL
+		return new PaymentResponse
+		{
+			OrderId = orderId,
+			ApprovalUrl = $"https://www.sandbox.paypal.com/checkoutnow?token={orderId}"
+		};
 	}
 
-	public async Task<bool> CompletePayPalPaymentAsync(int paymentId, string orderId)
+	public async Task<bool> CompletePayPalPaymentAsync(string orderId)
 	{
-		var payment = await _context.Payments.FindAsync(paymentId);
-		if (payment == null) throw new KeyNotFoundException("Payment not found.");
-
-		bool success = await _payPalService.CapturePaymentAsync(orderId);
-
-		if (success)
+		using (var transaction = await _context.Database.BeginTransactionAsync())
 		{
-			payment.PaymentStatus = PaymentStatus.Completed;
+			try
+			{
+				var payment = await _context.Payments.FirstOrDefaultAsync(p => p.TransactionId == orderId);
+				if (payment == null) throw new KeyNotFoundException("Payment not found.");
 
-			// Activate Subscription
-			var userSubscription = new UserSubscription
-            {
-				StartDate = DateTime.UtcNow,
-				EndDate = DateTime.UtcNow.AddMonths(1) // Example: 1 month subscription
-			};
-			_context.UserSubscriptions.Add(userSubscription);
+				bool success = await _payPalService.CapturePaymentAsync(orderId);
 
-			await _context.SaveChangesAsync();
-			Log.Information($"Subscription activated for User {payment.UserId}");
+				if (success)
+				{
+					payment.PaymentStatus = PaymentStatus.Completed;
+
+					// Activate Subscription
+					var userSubscription = new UserSubscription
+					{
+						UserId = payment.UserId,
+						SubscriptionPlanId = payment.SubscriptionPlanId,
+						StartDate = DateTime.UtcNow,
+						EndDate = DateTime.UtcNow.AddMonths(1) // Example: 1 month subscription
+					};
+					_context.UserSubscriptions.Add(userSubscription);
+
+					await _context.SaveChangesAsync();
+					await transaction.CommitAsync();
+				}
+				else
+				{
+					payment.PaymentStatus = PaymentStatus.Cancelled;
+					await _context.SaveChangesAsync();
+					await transaction.RollbackAsync();
+				}
+
+				return success;
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				Console.WriteLine($"Error: {ex.Message}");
+				throw;
+			}
 		}
-		else
-		{
-			payment.PaymentStatus = PaymentStatus.Cancelled;
-			await _context.SaveChangesAsync();
-		}
-
-		return success;
 	}
-	//public async Task<bool> RefundPaymentAsync(int paymentId, string saleId, decimal amount)
-	//{
-	//	var payment = await _context.Payments.FindAsync(paymentId);
-	//	if (payment == null) throw new KeyNotFoundException("Payment not found.");
-
-	//	bool success = await _payPalService.RefundPaymentAsync(saleId, amount);
-
-	//	if (success)
-	//	{
-	//		payment.PaymentStatus = PaymentStatus.Cancelled;
-	//		await _context.SaveChangesAsync();
-	//	}
-	//	else
-	//	{
-	//		payment.PaymentStatus = PaymentStatus.Cancelled;
-	//		await _context.SaveChangesAsync();
-	//	}
-
-	//	return success;
-	//}
-
 }
