@@ -5,13 +5,6 @@ namespace PATHLY_API.Models
 {
     public class RegisterModel
     {
-
-        [StringLength(100)]
-        public string FirstName { get; set; }
-
-        [StringLength(100)]
-        public string LastName { get; set; }
-
         [Required, StringLength(20)]
         public string Username { get; set; }
 

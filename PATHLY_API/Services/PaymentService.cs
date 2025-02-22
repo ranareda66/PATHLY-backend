@@ -17,7 +17,7 @@ public class PaymentService
 		_payPalService = payPalService;
 	}
 
-	public async Task<PaymentResponse> ProcessPayPalPaymentAsync(int userId, int subscriptionPlanId)
+	public async Task<PaymentResponse> CreatePaymentAsync(int userId, int subscriptionPlanId)
 	{
 		var user = await _context.Users.FindAsync(userId);
 		var plan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
@@ -47,53 +47,50 @@ public class PaymentService
 		return new PaymentResponse
 		{
 			OrderId = orderId,
-			ApprovalUrl = $"https://www.sandbox.paypal.com/checkoutnow?token={orderId}"
 		};
 	}
 
-	public async Task<bool> CompletePayPalPaymentAsync(string orderId)
+	public async Task<bool> CapturePaymentAsync(string orderId)
 	{
-		using (var transaction = await _context.Database.BeginTransactionAsync())
+		var payment = await _context.Payments.FirstOrDefaultAsync(p => p.TransactionId == orderId);
+		if (payment == null) throw new KeyNotFoundException("Payment not found.");
+
+		bool success = await _payPalService.CapturePaymentAsync(orderId);
+
+		if (success)
 		{
-			try
+			payment.PaymentStatus = PaymentStatus.Completed;
+
+			// Activate Subscription
+			var userSubscription = new UserSubscription
 			{
-				var payment = await _context.Payments.FirstOrDefaultAsync(p => p.TransactionId == orderId);
-				if (payment == null) throw new KeyNotFoundException("Payment not found.");
+				UserId = payment.UserId,
+				SubscriptionPlanId = payment.SubscriptionPlanId,
+				StartDate = DateTime.UtcNow,
+				EndDate = DateTime.UtcNow.AddMonths(1) // Example: 1 month subscription
+			};
+			_context.UserSubscriptions.Add(userSubscription);
 
-				bool success = await _payPalService.CapturePaymentAsync(orderId);
-
-				if (success)
-				{
-					payment.PaymentStatus = PaymentStatus.Completed;
-
-					// Activate Subscription
-					var userSubscription = new UserSubscription
-					{
-						UserId = payment.UserId,
-						SubscriptionPlanId = payment.SubscriptionPlanId,
-						StartDate = DateTime.UtcNow,
-						EndDate = DateTime.UtcNow.AddMonths(1) // Example: 1 month subscription
-					};
-					_context.UserSubscriptions.Add(userSubscription);
-
-					await _context.SaveChangesAsync();
-					await transaction.CommitAsync();
-				}
-				else
-				{
-					payment.PaymentStatus = PaymentStatus.Cancelled;
-					await _context.SaveChangesAsync();
-					await transaction.RollbackAsync();
-				}
-
-				return success;
-			}
-			catch (Exception ex)
-			{
-				await transaction.RollbackAsync();
-				Console.WriteLine($"Error: {ex.Message}");
-				throw;
-			}
+			await _context.SaveChangesAsync();
 		}
+		else
+		{
+			payment.PaymentStatus = PaymentStatus.Cancelled;
+			await _context.SaveChangesAsync();
+		}
+
+		return success;
+	}
+	public async Task<bool> CancelPaymentAsync(string orderId)
+	{
+		// Find payment by PayPal Order ID
+		var payment = await _context.Payments.FirstOrDefaultAsync(p => p.TransactionId == orderId);
+		if (payment == null) throw new KeyNotFoundException("Payment not found.");
+
+		// Update payment status to "Cancelled"
+		payment.PaymentStatus = PaymentStatus.Cancelled;
+		await _context.SaveChangesAsync();
+
+		return true;
 	}
 }

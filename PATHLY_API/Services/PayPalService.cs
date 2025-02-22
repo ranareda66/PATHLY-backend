@@ -13,7 +13,11 @@ namespace PATHLY_API.Services
 		public PayPalService(IOptions<PayPalSettings> payPal)
 		{
 			var _payPal = payPal.Value;
-			var environment = new SandboxEnvironment(_payPal.ClientId, _payPal.Secret);
+			PayPalEnvironment environment = _payPal.Environment.ToLower() switch
+			{
+				"live" => new LiveEnvironment(_payPal.ClientId, _payPal.Secret),
+				_ => new SandboxEnvironment(_payPal.ClientId, _payPal.Secret) // Default to Sandbox
+			};
 			_client = new PayPalHttpClient(environment);
 		}
 
@@ -22,11 +26,6 @@ namespace PATHLY_API.Services
 			var order = new OrderRequest
 			{
 				CheckoutPaymentIntent = "CAPTURE",
-				ApplicationContext = new ApplicationContext
-				{
-					ReturnUrl = "https://localhost:7098/api/Payment/success", // Redirect after approval
-					CancelUrl = "https://localhost:7098/api/Payment/cancel"    // Redirect if cancelled
-				},
 				PurchaseUnits = new List<PurchaseUnitRequest>
 			    {
 				   new PurchaseUnitRequest
@@ -50,17 +49,31 @@ namespace PATHLY_API.Services
 
 		public async Task<bool> CapturePaymentAsync(string orderId)
 		{
+			var getRequest = new OrdersGetRequest(orderId);
+			var getResponse = await _client.Execute(getRequest);
+			var order = getResponse.Result<Order>();
+
+			Console.WriteLine($"Order ID: {order.Id}, Status: {order.Status}");
+
+			if (order.Status != "APPROVED")
+			{
+				throw new InvalidOperationException("Order must be in APPROVED state before capture.");
+			}
+
 			var request = new OrdersCaptureRequest(orderId);
+
 			try
 			{
 				var response = await _client.Execute(request);
-				return response.StatusCode == System.Net.HttpStatusCode.OK;
+
+				Console.WriteLine($"PayPal Response Status: {response.StatusCode}");
+
+				return response.StatusCode == System.Net.HttpStatusCode.Created;
 			}
 			catch (PayPalHttp.HttpException ex)
 			{
-				// Log the error for debugging
 				Console.WriteLine($"PayPal API Error: {ex.Message}");
-				throw; 
+				throw;
 			}
 		}
 	}

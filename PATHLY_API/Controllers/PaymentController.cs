@@ -15,38 +15,58 @@ namespace PATHLY_API.Controllers
 			_paymentService = paymentService;
 		}
 
-		[HttpPost("process-payment")]
-		public async Task<ActionResult<PaymentResponse>> ProcessPayment([FromBody] PaymentRequest request)
+		[HttpPost("create-order")]
+		public async Task<ActionResult<PaymentResponse>> CreateOrder([FromBody] PaymentRequest request)
 		{
 			try
 			{
-				var response = await _paymentService.ProcessPayPalPaymentAsync(request.UserId, request.SubscriptionPlanId);
+				var response = await _paymentService.CreatePaymentAsync(request.UserId, request.SubscriptionPlanId);
 				return Ok(response);
 			}
 			catch (KeyNotFoundException ex)
 			{
 				return NotFound(ex.Message);
 			}
-		}
-
-		[HttpGet("success")]
-		public async Task<IActionResult> Success([FromQuery] string orderId)
-		{
-			bool success = await _paymentService.CompletePayPalPaymentAsync(orderId);
-			if (success)
+			catch (Exception ex)
 			{
-				return Redirect("yourapp://payment-success"); // Redirect to Flutter app
-			}
-			else
-			{
-				return Redirect("yourapp://payment-failed"); // Redirect to Flutter app
+				return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
 			}
 		}
 
-		[HttpGet("cancel")]
-		public IActionResult Cancel()
+		[HttpPost("capture-payment")]
+		public async Task<IActionResult> CapturePayment([FromBody] CompletePaymentRequest request)
 		{
-			return Redirect("yourapp://payment-cancelled"); // Redirect to Flutter app
+			try
+			{
+				bool success = await _paymentService.CapturePaymentAsync(request.OrderId);
+				return Ok(new { Success = success });
+			}
+			catch (KeyNotFoundException ex)
+			{
+				return NotFound(ex.Message);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
+			}
+		}
+
+		[HttpPost("cancel-payment")]
+		public async Task<IActionResult> CancelPayment([FromBody] CompletePaymentRequest request)
+		{
+			try
+			{
+				bool success = await _paymentService.CancelPaymentAsync(request.OrderId);
+				return Ok(new { Success = success });
+			}
+			catch (KeyNotFoundException ex)
+			{
+				return NotFound(ex.Message);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
+			}
 		}
 	}
 }

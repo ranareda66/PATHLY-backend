@@ -25,6 +25,7 @@ namespace PATHLY_API
 			builder.Services.Configure<jwt>(builder.Configuration.GetSection("JWT"));
 			builder.Services.Configure<PayPalSettings>(builder.Configuration.GetSection("PayPal"));
 
+
 			builder.Services.AddControllers();
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddEndpointsApiExplorer();
