@@ -2,8 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using PATHLY_API.Data;
 using PATHLY_API.JWT;
 using PATHLY_API.Models;
+using PATHLY_API.Services.EmailServicses;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -15,14 +17,16 @@ namespace PATHLY_API.Services.AuthServices
     {
         private readonly UserManager<User> _userManager;
         private readonly jwt _jwt;
+        private readonly IEmailService _emailService;
+        private readonly ApplicationDbContext _context;
 
-
-        public AuthService(UserManager<User> userManager, IOptions<jwt> jwt)
+        public AuthService(UserManager<User> userManager, IOptions<jwt> jwt, IEmailService emailService, ApplicationDbContext context)
         {
             _userManager = userManager;
             _jwt = jwt.Value;
+            _emailService = emailService;
+            _context = context;
         }
-
 
         public async Task<AuthModel> RegisterAsync(RegisterModel model)
         {
@@ -203,6 +207,62 @@ namespace PATHLY_API.Services.AuthServices
             await _userManager.UpdateAsync(user);
 
             return true;
+        }
+        public async Task<string> SendPasswordResetCodeAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return "User not found.";
+
+           
+            var code = new Random().Next(1000, 9999).ToString();
+
+           
+            var resetCode = new PasswordResetCode
+            {
+                Email = email,
+                Code = code,
+                ExpirationTime = DateTime.UtcNow.AddMinutes(10) 
+            };
+
+            _context.PasswordResetCodes.Add(resetCode);
+            await _context.SaveChangesAsync();
+
+            
+            await _emailService.SendEmailAsync(email, "Password Reset Code", $"Your password reset code is: {code}");
+
+            return "Password reset code has been sent to your email.";
+        }
+
+        public async Task<string> ResetPasswordWithCodeAsync(string email, string code, string newPassword, string confirmPassword)
+        {
+            // Validate password confirmation
+            if (newPassword != confirmPassword)
+                return "The new password and confirmation password do not match.";
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return "User not found.";
+
+            // Find the reset code
+            var resetCode = await _context.PasswordResetCodes
+                .FirstOrDefaultAsync(rc => rc.Email == email && rc.Code == code);
+
+            if (resetCode == null || resetCode.ExpirationTime < DateTime.UtcNow)
+                return "Invalid or expired code.";
+
+            // Reset the password
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!result.Succeeded)
+                return "Failed to reset password.";
+
+            // Delete the used code
+            _context.PasswordResetCodes.Remove(resetCode);
+            await _context.SaveChangesAsync();
+
+            return "Password has been reset successfully.";
         }
 
 

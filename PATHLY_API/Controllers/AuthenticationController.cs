@@ -74,6 +74,35 @@ namespace PATHLY_API.Controllers
 
             return Ok();
         }
+        [HttpPost("forget-password")]
+        public async Task<IActionResult> SendResetCode([FromBody] ForgotPasswordModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.SendPasswordResetCodeAsync(model.Email);
+
+            if (result == "User not found.")
+                return NotFound(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPasswordWithCode([FromBody] ResetPasswordModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.ResetPasswordWithCodeAsync(model.Email, model.Code, model.NewPassword, model.ConfirmPassword);
+
+            if (result == "User not found." || result == "Invalid or expired code." || result == "Failed to reset password." || result == "The new password and confirmation password do not match.")
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+
 
 
         private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)

@@ -9,6 +9,8 @@ using PATHLY_API.JWT;
 using PATHLY_API.Models;
 using PATHLY_API.Services;
 using PATHLY_API.Services.AuthServices;
+using PATHLY_API.Services.EmailService;
+using PATHLY_API.Services.EmailServicses;
 using System.Text;
 
 namespace PATHLY_API
@@ -31,7 +33,8 @@ namespace PATHLY_API
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 			builder.Services.AddScoped<IAuthService, AuthService>();
-			builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<IEmailService,EmailService>();
+            builder.Services.AddScoped<UserService>();
 			builder.Services.AddScoped<TripService>();
 			builder.Services.AddScoped<ReportService>();
 			builder.Services.AddScoped<SearchService>();
@@ -39,9 +42,14 @@ namespace PATHLY_API
 			builder.Services.AddScoped<PayPalService>();
 			builder.Services.AddScoped<LocationService>();
 
-			builder.Services.AddIdentity<User, IdentityRole<int>>().AddEntityFrameworkStores<ApplicationDbContext>();
+            builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+            {
+                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider; 
+            })
+              .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders(); 
 
-			builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
 			{
                 //options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
                 options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");

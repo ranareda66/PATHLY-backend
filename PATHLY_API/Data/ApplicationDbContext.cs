@@ -11,6 +11,7 @@ namespace PATHLY_API.Data
         public ApplicationDbContext() {}
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) {}
         public DbSet<User> Users { get; set; }
+        public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
         public DbSet<Road> Roads { get; set; }
         public DbSet<Trip> Trips  { get; set; }
         public DbSet<Image> Images { get; set; }

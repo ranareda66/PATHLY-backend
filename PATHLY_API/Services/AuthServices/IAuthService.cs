@@ -8,5 +8,7 @@ namespace PATHLY_API.Services.AuthServices
         Task<AuthModel> GetTokenAsync(TokenRequestModel model);
         Task<AuthModel> RefreshTokenAsync(string token);
         Task<bool> RevokeTokenAsync(string token);
+        Task<string> SendPasswordResetCodeAsync(string email);
+        Task<string> ResetPasswordWithCodeAsync(string email, string code, string newPassword, string confirmPassword);
     }
 }
