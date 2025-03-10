@@ -215,7 +215,7 @@ namespace PATHLY_API.Services.AuthServices
                 return "User not found.";
 
            
-            var code = new Random().Next(1000, 9999).ToString();
+            var code = new Random().Next(100000, 999999).ToString();
 
            
             var resetCode = new PasswordResetCode
