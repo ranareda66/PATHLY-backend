@@ -7,30 +7,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace PATHLY_API.Models
 {
     public class User : IdentityUser<int>
-	{
-        public DateTime CreatedAt { get; set; }
+    {
+        public DateTime CreatedAt { get; internal set; }
 
-        [StringLength(15)]
-		public SubscriptionStatus SubscriptionStatus { get; set; }
-
-		[ForeignKey("UserLocations")]
-		public int UserLocationId { get; set; }
-
-        
         public bool IsActive { get; internal set; }
 
-        
-		public int TripCount { get; set; } = 0; 
+        public int TripCount { get; set; } = 0;
 
-		public int MaxFreeTrips { get; set; } = 10;
-        public List<Trip> Trips { get; set; }
-		public virtual List<Payment> Payments { get; set; }
+        public ICollection<Trip> Trips { get; set; }
+        public virtual List<Payment> Payments { get; set; }
         public ICollection<Search> Searchs { get; set; }
-		public ICollection<Report> Reports { get; set; } 
-
-        public UserSubscription UserSubscription { get; set; }
-        public Location Location { get; set; }
+        public ICollection<Report> Reports { get; set; }
         public List<RefreshToken>? RefreshTokens { get; set; }
+        public UserSubscription UserSubscription { get; set; }
+        public SubscriptionStatus SubscriptionStatus { get; set; }
     }
 }
 

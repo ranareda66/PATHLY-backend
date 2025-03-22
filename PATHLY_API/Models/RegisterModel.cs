@@ -5,13 +5,14 @@ namespace PATHLY_API.Models
 {
     public class RegisterModel
     {
-        [Required, StringLength(20)]
+        [Required, MinLength(3), MaxLength(20)]
+        [RegularExpression("^(?=.*[a-zA-Z])[a-zA-Z0-9]{3,20}$", ErrorMessage = "Username must be 3-20 characters long, contain only letters and numbers, and must include at least one letter.")]
         public string Username { get; set; }
 
-        [Required, StringLength(50)]
+        [Required, EmailAddress]
         public string Email { get; set; }
 
-        [Required, StringLength(50)]
+        [Required, MaxLength(50)]
         public string Password { get; set; }
 
         [DefaultValue(false)]

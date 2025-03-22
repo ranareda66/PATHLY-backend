@@ -11,7 +11,6 @@ namespace PATHLY_API.Data
         public ApplicationDbContext() {}
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) {}
         public DbSet<User> Users { get; set; }
-        public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
         public DbSet<Road> Roads { get; set; }
         public DbSet<Trip> Trips  { get; set; }
         public DbSet<Image> Images { get; set; }
@@ -23,6 +22,7 @@ namespace PATHLY_API.Data
         public DbSet<QualityMetric> QualityMetrics { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
+        public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -96,11 +96,10 @@ namespace PATHLY_API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
 
-            // Report - Attachment Relationship
+            // Report - Image Relationship
             modelBuilder.Entity<Report>()
-                .HasMany(r => r.Attachments)
+                .HasOne(r => r.Image)
                 .WithOne(a => a.Report)
-                .HasForeignKey(a => a.ReportId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 
@@ -117,6 +116,14 @@ namespace PATHLY_API.Data
                 .HasOne(r => r.QualityMetric)
                 .WithOne(q => q.Road)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Location>()
+                .HasOne(l => l.User)
+                .WithMany() 
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
         }
     }
 }

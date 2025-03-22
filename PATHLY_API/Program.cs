@@ -9,8 +9,7 @@ using PATHLY_API.JWT;
 using PATHLY_API.Models;
 using PATHLY_API.Services;
 using PATHLY_API.Services.AuthServices;
-using PATHLY_API.Services.EmailService;
-using PATHLY_API.Services.EmailServicses;
+using PATHLY_API.Services.EmailServices;
 using System.Text;
 
 namespace PATHLY_API
@@ -24,16 +23,13 @@ namespace PATHLY_API
 
 			// Add services to the container.
 
-			builder.Services.Configure<jwt>(builder.Configuration.GetSection("JWT"));
+			builder.Services.Configure<Jwt>(builder.Configuration.GetSection("JWT"));
 			builder.Services.Configure<PayPalSettings>(builder.Configuration.GetSection("PayPal"));
-
 
 			builder.Services.AddControllers();
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
-			builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IEmailService,EmailService>();
             builder.Services.AddScoped<UserService>();
 			builder.Services.AddScoped<TripService>();
 			builder.Services.AddScoped<ReportService>();
@@ -41,6 +37,8 @@ namespace PATHLY_API
 			builder.Services.AddScoped<PaymentService>();
 			builder.Services.AddScoped<PayPalService>();
 			builder.Services.AddScoped<LocationService>();
+			builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IEmailService,EmailService>();
 
             builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {
@@ -51,8 +49,8 @@ namespace PATHLY_API
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
 			{
-                //options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
-                options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
+                options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
+                //options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
             });
 
 			builder.Services.AddAuthentication(options =>
@@ -73,10 +71,8 @@ namespace PATHLY_API
 						ValidIssuer = builder.Configuration["JWT:Issuer"],
 						ValidAudience = builder.Configuration["JWT:Audience"],
 						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
-                        ClockSkew = TimeSpan.Zero
-
-
-                    };
+						ClockSkew = TimeSpan.Zero
+					};
 				});
 
 
@@ -89,7 +85,8 @@ namespace PATHLY_API
 				app.UseSwaggerUI();
 			}
 
-			app.UseHttpsRedirection();
+            app.UseCookiePolicy();
+            app.UseHttpsRedirection();
 			app.UseAuthentication();
 			app.UseAuthorization();
 			app.MapControllers();

@@ -20,9 +20,7 @@ public class Road
 
     public RoadQuality Quality { get; set; }
 
-
-    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime LastUpdate { get; set; } = DateTime.UtcNow;
+    public DateTime LastUpdate { get; internal set; } = DateTime.UtcNow;
 
 
     [Required , ForeignKey("Trip")]
@@ -30,7 +28,7 @@ public class Road
 
     public Trip Trip { get; set; }
     public QualityMetric QualityMetric { get; set; }
-    public ICollection<RoadAnomalies> RoadAnomalies { get; set; } = new List<RoadAnomalies>();
+    public ICollection<RoadAnomalies> RoadAnomalies { get; set; }
 
     public ICollection<TripRoad> TripRoads { get; set; }
 

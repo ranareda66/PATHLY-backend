@@ -3,20 +3,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PATHLY_API.Models
 {
-	public class Location
+    public class Location
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; } 
+        public int Id { get; set; }
 
-		[Required , Column(TypeName = "decimal(9, 6)")] 
-		public decimal Latitude { get; set; }
+        [Required, Column(TypeName = "decimal(9, 6)")]
+        public decimal Latitude { get; set; }
 
-        [Required, Column(TypeName = "decimal(9, 6)")] 
-		public decimal Longitude { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(9, 6)")]
+        public decimal Longitude { get; set; }
+
         public DateTime UpdatedAt { get; internal set; } = DateTime.UtcNow;
 
-        [Required , ForeignKey("User")]
+        [ForeignKey("User")]
         public int UserId { get; set; }
         public User User { get; set; }
 

@@ -10,10 +10,8 @@ public class RoadAnomalies
     public string Type { get; set; } 
     public string Severity { get; set; }
 
-    public Location Location { get; set; } 
-
     [Required , ForeignKey("Road")]
     public int RoadId { get; set; } 
-
     public Road Road { get; set; }
+    public Location Location { get; set; } 
 }

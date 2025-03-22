@@ -12,15 +12,15 @@ using PATHLY_API.Data;
 namespace PATHLY_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250308222218_resetcode")]
-    partial class resetcode
+    [Migration("20250322144959_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -170,7 +170,8 @@ namespace PATHLY_API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReportId");
+                    b.HasIndex("ReportId")
+                        .IsUnique();
 
                     b.ToTable("Images");
                 });
@@ -197,8 +198,7 @@ namespace PATHLY_API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("Locations");
                 });
@@ -243,19 +243,16 @@ namespace PATHLY_API.Migrations
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PaymentStatus")
-                        .HasMaxLength(20)
                         .HasColumnType("int");
 
                     b.Property<int>("SubscriptionPlanId")
                         .HasColumnType("int");
 
                     b.Property<string>("TransactionId")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -314,25 +311,20 @@ namespace PATHLY_API.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(800)
+                        .HasColumnType("nvarchar(800)");
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ReportType")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("RoadId")
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
-                        .HasMaxLength(15)
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserLocationId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -430,7 +422,6 @@ namespace PATHLY_API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
-                        .HasMaxLength(15)
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -490,9 +481,6 @@ namespace PATHLY_API.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int>("MaxFreeTrips")
-                        .HasColumnType("int");
-
                     b.Property<string>("NormalizedEmail")
                         .HasColumnType("nvarchar(max)");
 
@@ -512,7 +500,6 @@ namespace PATHLY_API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SubscriptionStatus")
-                        .HasMaxLength(15)
                         .HasColumnType("int");
 
                     b.Property<int>("TripCount")
@@ -520,9 +507,6 @@ namespace PATHLY_API.Migrations
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
-
-                    b.Property<int>("UserLocationId")
-                        .HasColumnType("int");
 
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
@@ -592,7 +576,6 @@ namespace PATHLY_API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("LastUpdate")
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Length")
@@ -659,8 +642,8 @@ namespace PATHLY_API.Migrations
             modelBuilder.Entity("PATHLY_API.Models.Image", b =>
                 {
                     b.HasOne("PATHLY_API.Models.Report", "Report")
-                        .WithMany("Attachments")
-                        .HasForeignKey("ReportId")
+                        .WithOne("Image")
+                        .HasForeignKey("PATHLY_API.Models.Image", "ReportId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -670,8 +653,8 @@ namespace PATHLY_API.Migrations
             modelBuilder.Entity("PATHLY_API.Models.Location", b =>
                 {
                     b.HasOne("PATHLY_API.Models.User", "User")
-                        .WithOne("Location")
-                        .HasForeignKey("PATHLY_API.Models.Location", "UserId")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -869,7 +852,8 @@ namespace PATHLY_API.Migrations
 
             modelBuilder.Entity("PATHLY_API.Models.Report", b =>
                 {
-                    b.Navigation("Attachments");
+                    b.Navigation("Image")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PATHLY_API.Models.SubscriptionPlan", b =>
@@ -887,9 +871,6 @@ namespace PATHLY_API.Migrations
 
             modelBuilder.Entity("PATHLY_API.Models.User", b =>
                 {
-                    b.Navigation("Location")
-                        .IsRequired();
-
                     b.Navigation("Payments");
 
                     b.Navigation("Reports");

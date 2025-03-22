@@ -2,7 +2,7 @@
 
 namespace PATHLY_API.Models
 {
-    public class TokenRequestModel
+    public class LoginModel
     {
         [Required, EmailAddress]
         public string Email { get; set; }

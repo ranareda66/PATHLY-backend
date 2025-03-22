@@ -3,15 +3,23 @@ using PATHLY_API.Data;
 using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
 using PATHLY_API.Dto;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace PATHLY_API.Services
 {
-	public class UserService
+    public class UserService : ControllerBase
 	{
-		private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-		public UserService(ApplicationDbContext context) => _context = context;
+        public UserService(UserManager<User> userManager, ApplicationDbContext context)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
 
         public async Task SubscribeToPlanAsync(int userId, int subscriptionPlanId)
         {
@@ -42,45 +50,52 @@ namespace PATHLY_API.Services
             await _context.SaveChangesAsync();
         }
 
-        // Update User Data
-        public async Task<bool> UpdateDataAsync(int userId, string newEmail)
+        public async Task<string> ChangeEmailAsync(string userId, string newEmail, string password)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
-                return false;
+                return "User not found.";
 
-            if (user.Email == newEmail) 
-                return false;
+            var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
+            if (!isPasswordValid)
+                return "Invalid password.";
 
-            user.Email = newEmail;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-            return true;
+            var existingUser = await _userManager.FindByEmailAsync(newEmail);
+            if (existingUser != null)
+                return "Email is already in use.";
+
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+            var result = await _userManager.ChangeEmailAsync(user, newEmail, token);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return $"Failed to change email. Errors: {errors}";
+            }
+
+            return "Email changed successfully.";
+
         }
 
-        // Change User Password
-        public async Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword)
+        public async Task<string> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
         {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash) || BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
-                return false;
-
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // Need to Edit where user can remove his account , but not delete himself from database
-        public async Task<bool> DeleteAccountAsync(int userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
-                return false;
+                return "User not found.";
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-            return true;
+            var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(user, currentPassword);
+            if (!isCurrentPasswordValid)
+                return "Current password is incorrect.";
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return $"Failed to change password. Errors: {errors}";
+            }
+
+            return "Password changed successfully.";
         }
 
         // Retrieve user's Trip Details
@@ -125,6 +140,29 @@ namespace PATHLY_API.Services
                 })
                 .ToListAsync();
         }
+
+
+        // Get All Reports Related to specific user
+        public async Task<List<ReportDto>> GetUserReportsAsync(int userId)
+        {
+
+
+            var reports = await _context.Reports
+                .Where(r => r.UserId == userId)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+
+            return reports.Select(report => new ReportDto
+            {
+                Description = report.Description,
+                ReportType = report.ReportType,
+                CreatedAt = report.CreatedAt,
+                Status = report.Status,
+                Image = report.Image
+            }).ToList();
+        }
+
 
     }
 }

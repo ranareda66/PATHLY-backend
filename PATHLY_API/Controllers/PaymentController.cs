@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PATHLY_API.Dto;
 
 namespace PATHLY_API.Controllers
@@ -9,11 +8,7 @@ namespace PATHLY_API.Controllers
 	public class PaymentController : ControllerBase
 	{
 		private readonly PaymentService _paymentService;
-
-		public PaymentController(PaymentService paymentService)
-		{
-			_paymentService = paymentService;
-		}
+		public PaymentController(PaymentService paymentService) => _paymentService = paymentService;
 
 		[HttpPost("create-order")]
 		public async Task<ActionResult<PaymentResponse>> CreateOrder([FromBody] PaymentRequest request)

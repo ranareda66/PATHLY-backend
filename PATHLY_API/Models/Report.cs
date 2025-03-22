@@ -9,29 +9,26 @@ namespace PATHLY_API.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required, StringLength(50)]
+        [Required]
         public string ReportType { get; set; }
 
-        [Required, StringLength(500)]
+        [Required, MaxLength(800)]
         public string Description { get; set; }
 
-        [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; internal set; } = DateTime.UtcNow;
 
 
-        [Required, StringLength(15)] 
+        [Required] 
         public ReportStatus Status { get; set; }
 
         [Required, ForeignKey("User")]
         public int UserId { get; set; }
 
-        [Required, ForeignKey("Road")]
-        public int RoadId { get; set; }
 
-        [Required, ForeignKey("UserLocation")]
-        public int UserLocationId { get; set; }
+        [Required, ForeignKey("Location")]
+        public int LocationId { get; set; }
 
-        public ICollection<Image> Attachments = new List<Image>();
+        public Image Image { get; set; }
 
         public User User { get; set; }
 

@@ -7,62 +7,78 @@ namespace PATHLY_API.Controllers
 {
     [Route("api/[controller]")]
 	[ApiController]
-	public class AuthenticationController : ControllerBase
+	public class AuthController : ControllerBase
 	{
 		private readonly IAuthService _authService;
 
-		public AuthenticationController(IAuthService authService) => _authService = authService;
+		public AuthController(IAuthService authService) => _authService = authService;
 
-		[HttpPost("register")]
-		public async Task<IActionResult> RegisterAsync([FromBody] RegisterModel model)
-		{
-			if (!ModelState.IsValid)
-				return BadRequest(ModelState);
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        {
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
 
-			var result = await _authService.RegisterAsync(model);
+            var result = await _authService.RegisterAsync(model);
 
 
-			if (!result.IsAuthenticated)
-				return BadRequest(result.Message);
+            if (!result.IsAuthenticated)
+                return Unauthorized(result.Message);
 
             SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
 
-            return Ok(result);
-		}
+            return Ok(new
+            {
+                result.IsAuthenticated,
+                result.Token,
+                result.ExpiresOn
+            });
+        }
 
-		[HttpPost("getToken")]
-		public async Task<IActionResult> GetTokenAsync([FromBody] TokenRequestModel model)
-		{
-			var result = await _authService.GetTokenAsync(model);
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        {
+            var result = await _authService.LoginAsync(model);
 
-			if (!result.IsAuthenticated)
-				return BadRequest(result.Message);
+            if (!result.IsAuthenticated)
+                return BadRequest(result.Message);
 
             if (!string.IsNullOrEmpty(result.RefreshToken))
                 SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
 
-            return Ok(result);
-		}
+            return Ok(new
+            {
+                result.Token,
+                result.ExpiresOn
+            });
+        }
 
-        [HttpGet("refreshToken")]
-        public async Task<IActionResult> RefreshToken()
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshToken model = null)
         {
-            var refreshToken = Request.Cookies["refreshToken"];
+            var token = model?.Token ?? Request.Cookies["refresh-token"];
 
-            var result = await _authService.RefreshTokenAsync(refreshToken);
+            if (string.IsNullOrEmpty(token))
+                return BadRequest("Token is required.");
+
+            var result = await _authService.RefreshTokenAsync(token);
 
             if (!result.IsAuthenticated)
-                return BadRequest(result);
+                return BadRequest(result.Message);
 
             SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
 
-            return Ok(result);
+            return Ok(new
+            {
+                NewToken = result.RefreshToken,
+                NewTokenExpiration = result.RefreshTokenExpiration
+            });
         }
 
-        [HttpPost("revokeToken")]
+        [HttpPost("revoke-token")]
         public async Task<IActionResult> RevokeToken([FromBody] RevokeToken model)
         {
-            var token = model.Token ?? Request.Cookies["refreshToken"];
+            var token = model.Token ?? Request.Cookies["refresh-token"];
 
             if (string.IsNullOrEmpty(token))
                 return BadRequest("Token is required!");
@@ -74,6 +90,7 @@ namespace PATHLY_API.Controllers
 
             return Ok();
         }
+
         [HttpPost("forget-password")]
         public async Task<IActionResult> SendResetCode([FromBody] ForgotPasswordModel model)
         {
@@ -102,9 +119,6 @@ namespace PATHLY_API.Controllers
             return Ok(result);
         }
 
-
-
-
         private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
         {
             var cookieOptions = new CookieOptions
@@ -113,7 +127,7 @@ namespace PATHLY_API.Controllers
                 Expires = expires.ToLocalTime(),
             };
 
-            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+            Response.Cookies.Append("refresh-token", refreshToken, cookieOptions);
         }
     }
 }

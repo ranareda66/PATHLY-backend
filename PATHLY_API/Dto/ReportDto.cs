@@ -10,8 +10,6 @@ namespace PATHLY_API.Dto
         public string Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ReportStatus? Status { get; set; }
-
-        public ICollection<Image> Attachments = new List<Image>();
-
+        public Image Image { get; set; }
     }
 }

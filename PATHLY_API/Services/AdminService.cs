@@ -12,14 +12,12 @@ namespace PATHLY_API.Services
 
         public AdminService(ApplicationDbContext context) => _context = context;
 
-
         // Search for Report By ID
-        public ReportDto GetReport(int reportId)
+        public async Task<ReportDto> GetReportByIdAsync(int reportId)
         {
-            if (reportId <= 0)
-                throw new ArgumentException("Invalid report ID.");
-
-            var report = _context.Reports.FirstOrDefault(r => r.Id == reportId);
+            var report = await _context.Reports
+                .Include(r => r.Image)
+                .FirstOrDefaultAsync(r => r.Id == reportId);
 
             if (report == null)
                 throw new KeyNotFoundException($"Report with ID {reportId} not found.");
@@ -31,19 +29,20 @@ namespace PATHLY_API.Services
                 ReportType = report.ReportType,
                 CreatedAt = report.CreatedAt,
                 Status = report.Status,
-                Attachments = report.Attachments
+                Image = report.Image
             };
         }
 
         // Get All Reports Related to specific user
-        public List<ReportDto> GetUserReports(int userId)
+        public async Task<List<ReportDto>> GetUserReportsAsync(int userId)
         {
             if (userId <= 0)
                 throw new ArgumentException("Invalid user ID.");
 
-            var reports = _context.Reports
-                                  .Where(r => r.UserId == userId)
-                                  .ToList();
+            var reports = await _context.Reports
+                .Where(r => r.UserId == userId)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
 
             if (reports.Count == 0)
                 throw new KeyNotFoundException($"No reports found for user with ID {userId}.");
@@ -55,31 +54,29 @@ namespace PATHLY_API.Services
                 ReportType = report.ReportType,
                 CreatedAt = report.CreatedAt,
                 Status = report.Status,
-                Attachments = report.Attachments
-
+                Image = report.Image
             }).ToList();
         }
 
+
+
         // Get All Reports with the ability to filter by status
-        public async Task<List<ReportDto>> GetReportsAsync(ReportStatus? status)
+        public async Task<List<ReportDto>> GetReportsByStatusAsync(ReportStatus status)
         {
-            var query = _context.Reports.AsNoTracking();
-
-            if (status.HasValue)
-                query = query.Where(r => r.Status == status.Value);
-
-            return await query
+            var reports = await _context.Reports
+                .Where(r => r.Status == status)
                 .OrderByDescending(r => r.CreatedAt)
-                .Select(report => new ReportDto
-                {
-                    Id = report.Id,
-                    Description = report.Description,
-                    ReportType = report.ReportType,
-                    CreatedAt = report.CreatedAt,
-                    Status = report.Status,
-                    Attachments = report.Attachments
-                })
                 .ToListAsync();
+
+            return reports.Select(report => new ReportDto
+            {
+                Id = report.Id,
+                Description = report.Description,
+                ReportType = report.ReportType,
+                CreatedAt = report.CreatedAt,
+                Status = report.Status,
+                Image = report.Image
+            }).ToList();
         }
 
         // Update the report status (approval or rejection)
@@ -92,7 +89,6 @@ namespace PATHLY_API.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
 
 
         // Search for users (with the ability to search by name or email)

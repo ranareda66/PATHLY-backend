@@ -1,4 +1,4 @@
-﻿namespace PATHLY_API.Services.EmailServicses
+﻿namespace PATHLY_API.Services.EmailServices
 {
     public interface IEmailService
     {

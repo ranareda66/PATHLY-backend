@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PATHLY_API.Data;
 using PATHLY_API.JWT;
 using PATHLY_API.Models;
-using PATHLY_API.Services.EmailServicses;
+using PATHLY_API.Services.EmailServices;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -13,14 +14,14 @@ using System.Text;
 
 namespace PATHLY_API.Services.AuthServices
 {
-    public class AuthService : IAuthService
+    public class AuthService : IAuthService 
     {
         private readonly UserManager<User> _userManager;
-        private readonly jwt _jwt;
+        private readonly Jwt _jwt;
         private readonly IEmailService _emailService;
         private readonly ApplicationDbContext _context;
 
-        public AuthService(UserManager<User> userManager, IOptions<jwt> jwt, IEmailService emailService, ApplicationDbContext context)
+        public AuthService(UserManager<User> userManager, IOptions<Jwt> jwt, IEmailService emailService, ApplicationDbContext context)
         {
             _userManager = userManager;
             _jwt = jwt.Value;
@@ -36,23 +37,24 @@ namespace PATHLY_API.Services.AuthServices
             if (await _userManager.FindByNameAsync(model.Username) is not null)
                 return new AuthModel { Message = "Username is already registered!" };
 
-            User user;
+
+            User user = model.IsAdmin ? new Admin
+            {
+                UserName = model.Username,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Email = model.Email
+            }
+            : new User
+            {
+                UserName = model.Username,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Email = model.Email
+            };
+
             if (model.IsAdmin)
-            {
-                user = new Admin
-                {
-                    UserName = model.Username,
-                    Email = model.Email,
-                };
-            }
-            else
-            {
-                user = new User
-                {
-                    UserName = model.Username,
-                    Email = model.Email,
-                };
-            }
+                await _userManager.AddToRoleAsync(user, "Admin");
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -83,9 +85,7 @@ namespace PATHLY_API.Services.AuthServices
                 RefreshTokenExpiration = refreshToken.ExpiresOn
             };
         }
-
-
-        public async Task<AuthModel> GetTokenAsync(TokenRequestModel model)
+        public async Task<AuthModel> LoginAsync(LoginModel model)
         {
             var authModel = new AuthModel();
 
@@ -122,19 +122,17 @@ namespace PATHLY_API.Services.AuthServices
 
             return authModel;
         }
-
-
         private async Task<JwtSecurityToken> CreateJwtToken(User user)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-               new Claim("id", user.Id.ToString()),
-               new Claim("isAdmin", (user is Admin).ToString()) // Add a claim to distinguish between User and Admin
+               new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+               new Claim("isAdmin", (user is Admin).ToString())
 			}
             .Union(userClaims);
 
@@ -150,8 +148,6 @@ namespace PATHLY_API.Services.AuthServices
 
             return jwtSecurityToken;
         }
-
-
         public async Task<AuthModel> RefreshTokenAsync(string token)
         {
             var authModel = new AuthModel();
@@ -159,18 +155,13 @@ namespace PATHLY_API.Services.AuthServices
             var user = await _userManager.Users.SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
 
             if (user == null)
-            {
-                authModel.Message = "Invalid token";
-                return authModel;
-            }
+                return new AuthModel { Message = "Invalid token." };
 
             var refreshToken = user.RefreshTokens.Single(t => t.Token == token);
 
             if (!refreshToken.IsActive)
-            {
-                authModel.Message = "Inactive token";
-                return authModel;
-            }
+                return new AuthModel { Message = "Inactive token." };
+
 
             refreshToken.RevokedOn = DateTime.UtcNow;
 
@@ -188,8 +179,6 @@ namespace PATHLY_API.Services.AuthServices
 
             return authModel;
         }
-
-
         public async Task<bool> RevokeTokenAsync(string token)
         {
             var user = await _userManager.Users.SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
@@ -233,10 +222,11 @@ namespace PATHLY_API.Services.AuthServices
 
             return "Password reset code has been sent to your email.";
         }
-
         public async Task<string> ResetPasswordWithCodeAsync(string email, string code, string newPassword, string confirmPassword)
         {
-            // Validate password confirmation
+
+
+
             if (newPassword != confirmPassword)
                 return "The new password and confirmation password do not match.";
 
@@ -244,35 +234,30 @@ namespace PATHLY_API.Services.AuthServices
             if (user == null)
                 return "User not found.";
 
-            // Find the reset code
             var resetCode = await _context.PasswordResetCodes
                 .FirstOrDefaultAsync(rc => rc.Email == email && rc.Code == code);
 
             if (resetCode == null || resetCode.ExpirationTime < DateTime.UtcNow)
                 return "Invalid or expired code.";
 
-            // Reset the password
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
 
             if (!result.Succeeded)
                 return "Failed to reset password.";
 
-            // Delete the used code
             _context.PasswordResetCodes.Remove(resetCode);
+            user.RefreshTokens?.Clear();
+            await _userManager.UpdateAsync(user);
             await _context.SaveChangesAsync();
 
             return "Password has been reset successfully.";
+
         }
-
-
         private RefreshToken GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
-
-            using var generator = new RNGCryptoServiceProvider();
-
-            generator.GetBytes(randomNumber);
+            RandomNumberGenerator.Fill(randomNumber);
 
             return new RefreshToken
             {
@@ -281,6 +266,5 @@ namespace PATHLY_API.Services.AuthServices
                 CreatedOn = DateTime.UtcNow
             };
         }
-
     }
 }
