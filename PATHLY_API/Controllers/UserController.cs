@@ -31,7 +31,19 @@ namespace PATHLY_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = "Invalid data.", Errors = ModelState.Values.SelectMany(v => v.Errors) });
 
-            return await _userService.ChangeEmailAsync(User, model.NewEmail, model.Password);
+            var result = await _userService.ChangeEmailAsync(User, model.NewEmail, model.Password);
+
+            return result switch
+            {
+                "User ID not found." => BadRequest(result),
+                "User not found." => NotFound(result),
+                "Invalid password." => Unauthorized(result),
+                "New email cannot be the same as the current email." => BadRequest(result),
+                "Email is already in use." => Conflict(result),
+                _ when result.StartsWith("Failed to change email.") => BadRequest(result),
+                "Email changed successfully." => Ok(result),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            };
         }
 
         [HttpPost("change-password")]
@@ -40,7 +52,18 @@ namespace PATHLY_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = "Invalid data.", Errors = ModelState.Values.SelectMany(v => v.Errors) });
 
-            return await _userService.ChangePasswordAsync(User, model.CurrentPassword, model.NewPassword);
+            var result = await _userService.ChangePasswordAsync(User, model.CurrentPassword, model.NewPassword);
+
+            return result switch
+            {
+                "User ID not found." => BadRequest(result),
+                "User not found." => NotFound(result),
+                "Current password is incorrect." => Unauthorized(result),
+                "New password cannot be the same as the current password." => BadRequest(result),
+                _ when result.StartsWith("Failed to change password.") => BadRequest(result),
+                "Password changed successfully." => Ok(result),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            };
         }
 
         [HttpPost("create-report")]

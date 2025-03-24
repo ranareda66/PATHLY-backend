@@ -11,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace PATHLY_API.Services
 {
-    public class UserService : ControllerBase
+    public class UserService
 	{
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
@@ -23,29 +23,28 @@ namespace PATHLY_API.Services
         }
 
         // Change Email for user ✅  
-        public async Task<IActionResult> ChangeEmailAsync(ClaimsPrincipal user, string newEmail, string password)
+        public async Task<string> ChangeEmailAsync(ClaimsPrincipal user, string newEmail, string password)
         {
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                   ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                    ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
             if (userIdClaim == null)
-                return BadRequest("User ID not found.");  
+                return "User ID not found.";
 
             var appUser = await _userManager.FindByIdAsync(userIdClaim);
             if (appUser == null)
-                return NotFound("User not found."); 
+                return "User not found.";
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(appUser, password);
             if (!isPasswordValid)
-                return Unauthorized("Invalid password.");
+                return "Invalid password.";
 
             if (appUser.Email == newEmail)
-                return BadRequest("New email cannot be the same as the current email.");
-
+                return "New email cannot be the same as the current email.";
 
             var existingUser = await _userManager.FindByEmailAsync(newEmail);
             if (existingUser != null)
-                return Conflict("Email is already in use.");
+                return "Email is already in use.";
 
             var token = await _userManager.GenerateChangeEmailTokenAsync(appUser, newEmail);
             var result = await _userManager.ChangeEmailAsync(appUser, newEmail, token);
@@ -53,43 +52,44 @@ namespace PATHLY_API.Services
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest($"Failed to change email. Errors: {errors}"); 
+                return $"Failed to change email. Errors: {errors}";
             }
 
-            return Ok("Email changed successfully."); 
+            return "Email changed successfully.";
         }
 
         // Change Password for user ✅
-        public async Task<IActionResult> ChangePasswordAsync(ClaimsPrincipal user, string currentPassword, string newPassword)
+        public async Task<string> ChangePasswordAsync(ClaimsPrincipal user, string currentPassword, string newPassword)
         {
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                   ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                    ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
             if (userIdClaim == null)
-                return BadRequest("User ID not found.");
+                return "User ID not found.";
 
             var appUser = await _userManager.FindByIdAsync(userIdClaim);
             if (appUser == null)
-                return NotFound("User not found.");
+                return "User not found.";
 
             var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(appUser, currentPassword);
             if (!isCurrentPasswordValid)
-                return Unauthorized("Current password is incorrect.");
+                return "Current password is incorrect.";
 
             if (currentPassword == newPassword)
-                return BadRequest("New password cannot be the same as the current password.");
+                return "New password cannot be the same as the current password.";
 
             var result = await _userManager.ChangePasswordAsync(appUser, currentPassword, newPassword);
 
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest($"Failed to change password. Errors: {errors}");
+                return $"Failed to change password. Errors: {errors}";
             }
 
-            return Ok("Password changed successfully.");
+            return "Password changed successfully.";
         }
-        
+
+
         public async Task SubscribeToPlanAsync(int userId, int subscriptionPlanId)
         {
             var subscriptionPlan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
