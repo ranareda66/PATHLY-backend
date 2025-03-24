@@ -53,8 +53,6 @@ namespace PATHLY_API.Services.AuthServices
                 Email = model.Email
             };
 
-            if (model.IsAdmin)
-                await _userManager.AddToRoleAsync(user, "Admin");
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -128,7 +126,7 @@ namespace PATHLY_API.Services.AuthServices
 
             var claims = new List<Claim>
             {
-               new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+               new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                new Claim(JwtRegisteredClaimNames.Email, user.Email),
                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

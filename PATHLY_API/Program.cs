@@ -32,12 +32,13 @@ namespace PATHLY_API
 			builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<UserService>();
 			builder.Services.AddScoped<TripService>();
+            builder.Services.AddScoped<AdminService>();
 			builder.Services.AddScoped<ReportService>();
 			builder.Services.AddScoped<SearchService>();
 			builder.Services.AddScoped<PaymentService>();
 			builder.Services.AddScoped<PayPalService>();
 			builder.Services.AddScoped<LocationService>();
-			builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IEmailService,EmailService>();
 
             builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -47,13 +48,13 @@ namespace PATHLY_API
               .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders(); 
 
+            var connectionString = builder.Configuration.GetConnectionString("cs");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-			{
-                options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
-                //options.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
+            {
+                options.UseSqlServer(connectionString);
             });
 
-			builder.Services.AddAuthentication(options =>
+            builder.Services.AddAuthentication(options =>
 			{
 				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;

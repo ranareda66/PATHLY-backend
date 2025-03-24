@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PATHLY_API.Models.Enums;
 using PATHLY_API.Services;
 
@@ -13,7 +12,7 @@ namespace PATHLY_API.Controllers
 
         public AdminController(AdminService adminService) => _adminService = adminService;
 
-
+        // Return a specific report using ID
         [HttpGet("reports/{reportId}")]
         public async Task<IActionResult> GetReportById(int reportId)
         {
@@ -21,7 +20,7 @@ namespace PATHLY_API.Controllers
             return Ok(report);
         }
 
-
+        // Return Reports based on report status ✅
         [HttpGet("reports/status/{status}")]
         public async Task<IActionResult> GetReportsByStatus(ReportStatus status)
         {
@@ -29,7 +28,7 @@ namespace PATHLY_API.Controllers
             return Ok(reports);
         }
 
-
+        // Update Report Status
         [HttpPut("reports/status/{reportId}")]
         public async Task<IActionResult> UpdateReportStatus(int reportId, [FromBody] ReportStatus newStatus)
         {

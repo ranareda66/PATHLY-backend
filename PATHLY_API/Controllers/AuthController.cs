@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PATHLY_API.Models;
 using PATHLY_API.Services.AuthServices;
 
@@ -48,6 +47,7 @@ namespace PATHLY_API.Controllers
 
             return Ok(new
             {
+                result.IsAuthenticated,
                 result.Token,
                 result.ExpiresOn
             });

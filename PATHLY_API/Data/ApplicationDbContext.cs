@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using PATHLY_API.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 
 namespace PATHLY_API.Data
 {
@@ -23,14 +22,6 @@ namespace PATHLY_API.Data
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
         public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            //optionsBuilder.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=PATHLY;Integrated Security=True;");
-            optionsBuilder.UseSqlServer("Server=.;Database=PATHLY;Trusted_Connection=True;Trust Server Certificate=true");
-
-            base.OnConfiguring(optionsBuilder);
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -110,19 +101,18 @@ namespace PATHLY_API.Data
                  .HasForeignKey(r => r.UserId)
                  .OnDelete(DeleteBehavior.Restrict);
 
+            // User - Location Relationship
+            modelBuilder.Entity<Location>()
+                    .HasOne(l => l.User)
+                    .WithMany() 
+                    .HasForeignKey(l => l.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
             // Road - QualityMetric Relationship
             modelBuilder.Entity<Road>()
-                .HasOne(r => r.QualityMetric)
-                .WithOne(q => q.Road)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Location>()
-                .HasOne(l => l.User)
-                .WithMany() 
-                .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
+                    .HasOne(r => r.QualityMetric)
+                    .WithOne(q => q.Road)
+                    .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

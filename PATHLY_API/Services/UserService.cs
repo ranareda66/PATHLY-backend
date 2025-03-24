@@ -6,6 +6,7 @@ using PATHLY_API.Dto;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using System.IdentityModel.Tokens.Jwt;
 
 
 namespace PATHLY_API.Services
@@ -21,6 +22,74 @@ namespace PATHLY_API.Services
             _userManager = userManager;
         }
 
+        // Change Email for user ✅  
+        public async Task<IActionResult> ChangeEmailAsync(ClaimsPrincipal user, string newEmail, string password)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (userIdClaim == null)
+                return BadRequest("User ID not found.");  
+
+            var appUser = await _userManager.FindByIdAsync(userIdClaim);
+            if (appUser == null)
+                return NotFound("User not found."); 
+
+            var isPasswordValid = await _userManager.CheckPasswordAsync(appUser, password);
+            if (!isPasswordValid)
+                return Unauthorized("Invalid password.");
+
+            if (appUser.Email == newEmail)
+                return BadRequest("New email cannot be the same as the current email.");
+
+
+            var existingUser = await _userManager.FindByEmailAsync(newEmail);
+            if (existingUser != null)
+                return Conflict("Email is already in use.");
+
+            var token = await _userManager.GenerateChangeEmailTokenAsync(appUser, newEmail);
+            var result = await _userManager.ChangeEmailAsync(appUser, newEmail, token);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest($"Failed to change email. Errors: {errors}"); 
+            }
+
+            return Ok("Email changed successfully."); 
+        }
+
+        // Change Password for user ✅
+        public async Task<IActionResult> ChangePasswordAsync(ClaimsPrincipal user, string currentPassword, string newPassword)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (userIdClaim == null)
+                return BadRequest("User ID not found.");
+
+            var appUser = await _userManager.FindByIdAsync(userIdClaim);
+            if (appUser == null)
+                return NotFound("User not found.");
+
+            var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(appUser, currentPassword);
+            if (!isCurrentPasswordValid)
+                return Unauthorized("Current password is incorrect.");
+
+            if (currentPassword == newPassword)
+                return BadRequest("New password cannot be the same as the current password.");
+
+            var result = await _userManager.ChangePasswordAsync(appUser, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest($"Failed to change password. Errors: {errors}");
+            }
+
+            return Ok("Password changed successfully.");
+        }
+        
         public async Task SubscribeToPlanAsync(int userId, int subscriptionPlanId)
         {
             var subscriptionPlan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
@@ -49,55 +118,7 @@ namespace PATHLY_API.Services
             _context.UserSubscriptions.Add(newSubscription);
             await _context.SaveChangesAsync();
         }
-
-        public async Task<string> ChangeEmailAsync(string userId, string newEmail, string password)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return "User not found.";
-
-            var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
-            if (!isPasswordValid)
-                return "Invalid password.";
-
-            var existingUser = await _userManager.FindByEmailAsync(newEmail);
-            if (existingUser != null)
-                return "Email is already in use.";
-
-            var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
-            var result = await _userManager.ChangeEmailAsync(user, newEmail, token);
-
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return $"Failed to change email. Errors: {errors}";
-            }
-
-            return "Email changed successfully.";
-
-        }
-
-        public async Task<string> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return "User not found.";
-
-            var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(user, currentPassword);
-            if (!isCurrentPasswordValid)
-                return "Current password is incorrect.";
-
-            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
-
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return $"Failed to change password. Errors: {errors}";
-            }
-
-            return "Password changed successfully.";
-        }
-
+        
         // Retrieve user's Trip Details
         public TripDto GetTripDetails(int tripId)
         {
@@ -139,28 +160,6 @@ namespace PATHLY_API.Services
                     Status = t.Status
                 })
                 .ToListAsync();
-        }
-
-
-        // Get All Reports Related to specific user
-        public async Task<List<ReportDto>> GetUserReportsAsync(int userId)
-        {
-
-
-            var reports = await _context.Reports
-                .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-
-            return reports.Select(report => new ReportDto
-            {
-                Description = report.Description,
-                ReportType = report.ReportType,
-                CreatedAt = report.CreatedAt,
-                Status = report.Status,
-                Image = report.Image
-            }).ToList();
         }
 
 

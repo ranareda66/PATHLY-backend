@@ -31,15 +31,7 @@ namespace PATHLY_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = "Invalid data.", Errors = ModelState.Values.SelectMany(v => v.Errors) });
 
-            var result = await _userService.ChangeEmailAsync(model.UserId, model.NewEmail, model.Password);
-
-            if (result == "User not found.")
-                return NotFound(result);
-
-            if (result == "Invalid password." || result == "Email is already in use." || result.StartsWith("Failed to change email."))
-                return BadRequest(result);
-
-            return Ok(result);
+            return await _userService.ChangeEmailAsync(User, model.NewEmail, model.Password);
         }
 
         [HttpPost("change-password")]
@@ -48,36 +40,20 @@ namespace PATHLY_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = "Invalid data.", Errors = ModelState.Values.SelectMany(v => v.Errors) });
 
-            var result = await _userService.ChangePasswordAsync(model.UserId, model.CurrentPassword, model.NewPassword);
-
-            if (result == "User not found." || result == "Current password is incorrect." || result == "Failed to change password.")
-                return NotFound(result);
-
-            return Ok(result);
+            return await _userService.ChangePasswordAsync(User, model.CurrentPassword, model.NewPassword);
         }
 
         [HttpPost("create-report")]
-        public async Task<IActionResult> CreateReport([FromForm] string reportType,[FromForm] string description,[FromForm] IFormFile file,[FromForm] decimal? latitude,[FromForm] decimal? longitude)
+        public async Task<IActionResult> CreateReport([FromForm] string reportType, [FromForm] string description, [FromForm] IFormFile image, [FromForm] decimal latitude, [FromForm] decimal longitude)
         {
-
-            if (!Request.Cookies.TryGetValue("UserId", out string userIdStr) || !int.TryParse(userIdStr, out int userId))
-                return Unauthorized("User is not authenticated.");
-
-
-            var report = await _reportService.CreateReportAsync(reportType, description, userId, file, latitude, longitude);
-            return CreatedAtAction(nameof(GetUserReports), new { userId }, report);
+            var report = await _reportService.CreateReportAsync(reportType, description, User, image, latitude, longitude);
+            return CreatedAtAction(nameof(GetReports), new { userId = report.UserId }, report);
         }
-
-        [HttpGet("reports/user/{userId}")]
-        public async Task<IActionResult> GetUserReports(int userId)
+       
+        [HttpGet("reports/userId/{userId}")] 
+        public async Task<IActionResult> GetReports(int userId)
         {
-            var reports = await _userService.GetUserReportsAsync(userId);
-
-            if (userId <= 0)
-                return BadRequest("Invalid user ID.");
-
-            if (reports.Count == 0)
-                return BadRequest( $"No reports found for user with ID {userId}.");
+            var reports = await _reportService.GetUserReportsAsync(userId);
             return Ok(reports);
         }
     }

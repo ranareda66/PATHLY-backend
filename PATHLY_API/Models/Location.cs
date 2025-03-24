@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace PATHLY_API.Models
 {
@@ -16,8 +17,9 @@ namespace PATHLY_API.Models
 
         public DateTime UpdatedAt { get; internal set; } = DateTime.UtcNow;
 
-        [ForeignKey("User")]
+        [Required, ForeignKey("User")]
         public int UserId { get; set; }
+        [JsonIgnore]
         public User User { get; set; }
 
     }

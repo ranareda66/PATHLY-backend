@@ -1,7 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using PATHLY_API.Data;
+using PATHLY_API.Dto;
 using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 
@@ -11,54 +16,70 @@ namespace PATHLY_API.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
-        public ReportService(ApplicationDbContext context, IWebHostEnvironment environment)
+        private readonly UserManager<User> _userManager;
+        public ReportService(ApplicationDbContext context, IWebHostEnvironment environment, UserManager<User> userManager)
         {
             _context = context;
             _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _userManager = userManager;
         }
 
-        public async Task<Report> CreateReportAsync(string reportType,string reportDescription,int userId,IFormFile file,decimal? latitude = null,decimal? longitude = null)
+        public async Task<Report> CreateReportAsync(string reportType, string reportDescription, ClaimsPrincipal user, IFormFile image, decimal latitude, decimal longitude)
         {
+            if (!Enum.TryParse(typeof(ReportType), reportType, true, out var validReportType))
+                throw new ArgumentException($"Invalid report type. Allowed values: {string.Join(", ", Enum.GetNames(typeof(ReportType)))}");
+
+
             if (string.IsNullOrWhiteSpace(reportDescription))
                 throw new ArgumentException("Report description cannot be empty.", nameof(reportDescription));
 
-            int locationId = 0;
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-            if (latitude.HasValue && longitude.HasValue && latitude.Value != 0 && longitude.Value != 0)
+
+            if (!int.TryParse(userIdClaim, out int userId))
+                throw new UnauthorizedAccessException($"Invalid User ID format. Value received: '{userIdClaim}'");
+
+
+
+            Location location = null;
+
+            if (latitude != 0 && longitude != 0)
             {
-                locationId = await GetLocationIdByCoordinatesAsync(latitude.Value, longitude.Value);
+                int locationId = await GetLocationIdByCoordinatesAsync(latitude, longitude);
 
                 if (locationId == 0)
                 {
                     // Create New Location if not Exists
-                    var newLocation = new Location
+                    location = new Location
                     {
-                        Latitude = latitude.Value,
-                        Longitude = longitude.Value
+                        Latitude = latitude,
+                        Longitude = longitude,
+                        UserId = userId
                     };
 
-                    _context.Locations.Add(newLocation);
+                    _context.Locations.Add(location);
                     await _context.SaveChangesAsync();
-                    locationId = newLocation.Id;
                 }
+                else
+                    location = await _context.Locations.FindAsync(locationId);
             }
 
             var report = new Report
             {
-                ReportType = reportType.Trim(),
+                ReportType = (ReportType)validReportType,
                 Description = reportDescription.Trim(),
                 Status = ReportStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
-                LocationId = locationId ,
-                UserId = userId 
+                Location = location,
+                UserId = userId
             };
 
             await _context.Reports.AddAsync(report);
             await _context.SaveChangesAsync();
 
-
-            if (file != null && file.Length > 0)
-                await UploadImageAsync(report.Id, file);
+            if (image is not null && image.Length > 0)
+                await UploadImageAsync(report.Id, image);
 
             return report;
         }
@@ -67,12 +88,10 @@ namespace PATHLY_API.Services
         {
             var location = await _context.Locations
                 .FirstOrDefaultAsync(l => Math.Abs(l.Latitude - latitude) < 0.0001M && Math.Abs(l.Longitude - longitude) < 0.0001M);
-
-
             return location?.Id ?? 0;  
         }
 
-        public async Task<Image> UploadImageAsync(int reportId, IFormFile file)
+        private async Task<Image> UploadImageAsync(int reportId, IFormFile file)
         {
 
             if (file == null || file.Length == 0)
@@ -92,7 +111,7 @@ namespace PATHLY_API.Services
 
 
             string fileExtension = Path.GetExtension(file.FileName);
-            string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}"; 
+            string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
             string imagePath = Path.Combine(uploadsFolder, uniqueFileName);
             string relativePath = $"uploads/{uniqueFileName}";
 
@@ -114,5 +133,29 @@ namespace PATHLY_API.Services
 
             return image;
         }
+
+        // Get All Reports Related to specific user ✅
+        public async Task<List<Report>> GetUserReportsAsync(int userId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("Invalid user ID.");
+
+            return await _context.Reports
+                .Where(r => r.UserId == userId)
+                .OrderBy(r => r.CreatedAt)
+                .Select(report => new Report
+                {
+                    Id = report.Id,
+                    Description = report.Description,
+                    ReportType = report.ReportType,
+                    CreatedAt = report.CreatedAt,
+                    Status = report.Status,
+                    UserId = report.UserId,
+                    Location = report.Location,
+                    Image = report.Image
+                })
+                .ToListAsync();
+        }
+
     }
 }

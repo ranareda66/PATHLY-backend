@@ -4,8 +4,7 @@ namespace PATHLY_API.Models
 {
     public class ChangeEmailModel
     {
-        [Required]
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
 
         [Required, EmailAddress]
         public string NewEmail { get; set; }

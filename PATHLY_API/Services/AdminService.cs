@@ -12,9 +12,12 @@ namespace PATHLY_API.Services
 
         public AdminService(ApplicationDbContext context) => _context = context;
 
-        // Search for Report By ID
-        public async Task<ReportDto> GetReportByIdAsync(int reportId)
+        // Search for Report By ID ✅
+        public async Task<Report> GetReportByIdAsync(int reportId)
         {
+            if (reportId <= 0)
+                throw new ArgumentException("Invalid Report ID.");
+
             var report = await _context.Reports
                 .Include(r => r.Image)
                 .FirstOrDefaultAsync(r => r.Id == reportId);
@@ -22,61 +25,37 @@ namespace PATHLY_API.Services
             if (report == null)
                 throw new KeyNotFoundException($"Report with ID {reportId} not found.");
 
-            return new ReportDto
+            return new Report
             {
                 Id = report.Id,
                 Description = report.Description,
                 ReportType = report.ReportType,
                 CreatedAt = report.CreatedAt,
                 Status = report.Status,
+                UserId = report.UserId,
+                Location = report.Location,
                 Image = report.Image
             };
         }
 
-        // Get All Reports Related to specific user
-        public async Task<List<ReportDto>> GetUserReportsAsync(int userId)
+        // Return Reports based on report status ✅
+        public async Task<List<Report>> GetReportsByStatusAsync(ReportStatus status)
         {
-            if (userId <= 0)
-                throw new ArgumentException("Invalid user ID.");
-
-            var reports = await _context.Reports
-                .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            if (reports.Count == 0)
-                throw new KeyNotFoundException($"No reports found for user with ID {userId}.");
-
-            return reports.Select(report => new ReportDto
-            {
-                Id = report.Id,
-                Description = report.Description,
-                ReportType = report.ReportType,
-                CreatedAt = report.CreatedAt,
-                Status = report.Status,
-                Image = report.Image
-            }).ToList();
-        }
-
-
-
-        // Get All Reports with the ability to filter by status
-        public async Task<List<ReportDto>> GetReportsByStatusAsync(ReportStatus status)
-        {
-            var reports = await _context.Reports
+            return await _context.Reports
                 .Where(r => r.Status == status)
-                .OrderByDescending(r => r.CreatedAt)
+                .OrderBy(r => r.CreatedAt)
+                .Select(report => new Report
+                    {
+                    Id = report.Id,
+                    Description = report.Description,
+                    ReportType = report.ReportType,
+                    CreatedAt = report.CreatedAt,
+                    Status = report.Status,
+                    UserId = report.UserId,
+                    Location = report.Location,
+                    Image = report.Image
+                    })
                 .ToListAsync();
-
-            return reports.Select(report => new ReportDto
-            {
-                Id = report.Id,
-                Description = report.Description,
-                ReportType = report.ReportType,
-                CreatedAt = report.CreatedAt,
-                Status = report.Status,
-                Image = report.Image
-            }).ToList();
         }
 
         // Update the report status (approval or rejection)
@@ -105,7 +84,7 @@ namespace PATHLY_API.Services
             return await query.Select(user => new UserDto
             {
                 Id = user.Id,
-                Name = user.UserName,
+                UserName = user.UserName,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
                 IsActive = user.IsActive
@@ -118,7 +97,7 @@ namespace PATHLY_API.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return false;
 
-            user.UserName = updatedUser.Name;
+            user.UserName = updatedUser.UserName;
             user.Email = updatedUser.Email;
             user.IsActive = updatedUser.IsActive;
 
