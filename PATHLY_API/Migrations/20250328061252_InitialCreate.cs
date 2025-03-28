@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PATHLY_API.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -313,9 +313,7 @@ namespace PATHLY_API.Migrations
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    SubscriptionPlanId = table.Column<int>(type: "int", nullable: false),
-                    SubscriptionPlanId1 = table.Column<int>(type: "int", nullable: true),
-                    UserId1 = table.Column<int>(type: "int", nullable: true)
+                    SubscriptionPlanId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -327,21 +325,11 @@ namespace PATHLY_API.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_UserSubscriptions_SubscriptionPlans_SubscriptionPlanId1",
-                        column: x => x.SubscriptionPlanId1,
-                        principalTable: "SubscriptionPlans",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_UserSubscriptions_User_UserId",
                         column: x => x.UserId,
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserSubscriptions_User_UserId1",
-                        column: x => x.UserId1,
-                        principalTable: "User",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -576,22 +564,10 @@ namespace PATHLY_API.Migrations
                 column: "SubscriptionPlanId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserSubscriptions_SubscriptionPlanId1",
-                table: "UserSubscriptions",
-                column: "SubscriptionPlanId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UserSubscriptions_UserId_SubscriptionPlanId",
                 table: "UserSubscriptions",
                 columns: new[] { "UserId", "SubscriptionPlanId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserSubscriptions_UserId1",
-                table: "UserSubscriptions",
-                column: "UserId1",
-                unique: true,
-                filter: "[UserId1] IS NOT NULL");
         }
 
         /// <inheritdoc />

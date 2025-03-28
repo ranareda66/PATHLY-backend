@@ -536,24 +536,12 @@ namespace PATHLY_API.Migrations
                     b.Property<int>("SubscriptionPlanId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SubscriptionPlanId1")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserId1")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("SubscriptionPlanId");
-
-                    b.HasIndex("SubscriptionPlanId1");
-
-                    b.HasIndex("UserId1")
-                        .IsUnique()
-                        .HasFilter("[UserId1] IS NOT NULL");
 
                     b.HasIndex("UserId", "SubscriptionPlanId")
                         .IsUnique();
@@ -793,24 +781,16 @@ namespace PATHLY_API.Migrations
             modelBuilder.Entity("PATHLY_API.Models.UserSubscription", b =>
                 {
                     b.HasOne("PATHLY_API.Models.SubscriptionPlan", "SubscriptionPlan")
-                        .WithMany()
+                        .WithMany("UserSubscriptions")
                         .HasForeignKey("SubscriptionPlanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("PATHLY_API.Models.SubscriptionPlan", null)
-                        .WithMany("UserSubscriptions")
-                        .HasForeignKey("SubscriptionPlanId1");
-
                     b.HasOne("PATHLY_API.Models.User", "User")
-                        .WithMany()
+                        .WithMany("UserSubscriptions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("PATHLY_API.Models.User", null)
-                        .WithOne("UserSubscription")
-                        .HasForeignKey("PATHLY_API.Models.UserSubscription", "UserId1");
 
                     b.Navigation("SubscriptionPlan");
 
@@ -885,8 +865,7 @@ namespace PATHLY_API.Migrations
 
                     b.Navigation("Trips");
 
-                    b.Navigation("UserSubscription")
-                        .IsRequired();
+                    b.Navigation("UserSubscriptions");
                 });
 
             modelBuilder.Entity("Road", b =>

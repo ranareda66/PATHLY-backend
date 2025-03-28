@@ -58,13 +58,10 @@ namespace PATHLY_API.Services.AuthServices
 
             if (!result.Succeeded)
             {
-                var errors = string.Empty;
-
-                foreach (var error in result.Errors)
-                    errors += $"{error.Description},";
-
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 return new AuthModel { Message = errors };
             }
+
             var jwtSecurityToken = await CreateJwtToken(user);
 
             var refreshToken = GenerateRefreshToken();

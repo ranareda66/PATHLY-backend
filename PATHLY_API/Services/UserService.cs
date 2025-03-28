@@ -12,7 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 namespace PATHLY_API.Services
 {
     public class UserService
-	{
+    {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
 
@@ -96,29 +96,29 @@ namespace PATHLY_API.Services
             if (subscriptionPlan == null)
                 throw new ArgumentNullException(nameof(subscriptionPlan), "Subscription plan not found.");
 
-            if (subscriptionPlan.DurationInMonths <= 0) 
+            if (subscriptionPlan.DurationInMonths <= 0)
                 throw new ArgumentException("Subscription duration must be greater than zero.", nameof(subscriptionPlan.DurationInMonths));
 
             var user = await _context.Users
-                .Include(u => u.UserSubscription)
+                .Include(u => u.UserSubscriptions)
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new Exception("User not found");
 
             var newSubscription = new UserSubscription
-			{
-				UserId = userId,
-				SubscriptionPlanId = subscriptionPlanId,
-				Status = SubscriptionStatus.Active,
-				StartDate = DateTime.UtcNow,
-				EndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths)
+            {
+                UserId = userId,
+                SubscriptionPlanId = subscriptionPlanId,
+                Status = SubscriptionStatus.Active,
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths)
             };
 
             _context.UserSubscriptions.Add(newSubscription);
             await _context.SaveChangesAsync();
         }
-        
+
         // Retrieve user's Trip Details
         public TripDto GetTripDetails(int tripId)
         {

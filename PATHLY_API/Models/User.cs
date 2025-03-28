@@ -19,8 +19,7 @@ namespace PATHLY_API.Models
         public ICollection<Search> Searchs { get; set; }
         public ICollection<Report> Reports { get; set; }
         public List<RefreshToken>? RefreshTokens { get; set; }
-        public UserSubscription UserSubscription { get; set; }
+        public List<UserSubscription> UserSubscriptions { get; set; }
         public SubscriptionStatus SubscriptionStatus { get; set; }
     }
 }
-

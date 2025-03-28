@@ -1,8 +1,9 @@
-﻿namespace PATHLY_API.Models.Enums
+﻿
+namespace PATHLY_API.Models.Enums
 {
-	public enum SubscriptionStatus
-	{
-        Active,
-		Expired
-	}
+    public enum SubscriptionStatus
+    {
+        Active = 1,
+        Expired
+    }
 }
