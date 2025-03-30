@@ -1,15 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PATHLY_API.Models
 {
     public class TripRoad
     {
-        [Required]
+        [Required, ForeignKey("Road")]
         public int RoadId { get; set; }
-        [Required]
+
+        [Required, ForeignKey("Trip")]
         public int TripId { get; set; }
 
-        public Road Road { get; set; }
-        public Trip Trip{ get; set; }
+        public virtual Road Road { get; set; }  
+        public virtual Trip Trip { get; set; }  
     }
 }

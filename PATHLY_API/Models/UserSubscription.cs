@@ -11,7 +11,7 @@ namespace PATHLY_API.Models
         public int Id { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; }
+        public DateTime StartDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         public DateTime EndDate { get; set; }
@@ -19,14 +19,15 @@ namespace PATHLY_API.Models
         [Required]
         public SubscriptionStatus Status { get; set; }
 
+
         [Required, ForeignKey("User")]
         public int UserId { get; set; }
 
-        public User User { get; set; }
 
         [Required, ForeignKey("SubscriptionPlan")]
         public int SubscriptionPlanId { get; set; }
 
-        public SubscriptionPlan SubscriptionPlan { get; set; }
+        public virtual User User { get; set; }
+        public virtual SubscriptionPlan SubscriptionPlan { get; set; }
     }
 }

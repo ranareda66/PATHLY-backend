@@ -11,29 +11,29 @@ namespace PATHLY_API.Models
         public int Id { get; set; }
 
         [Required, JsonConverter(typeof(JsonStringEnumConverter))]
-        public ReportType ReportType { get; set; }
+        public ProblemType ReportType { get; set; }
 
         [Required, MaxLength(800)]
         public string Description { get; set; }
 
         [Required, JsonConverter(typeof(JsonStringEnumConverter))]
-        public ReportStatus Status { get; set; }
+        public ReportStatus Status { get; set; } = ReportStatus.Pending;
 
         public DateTime CreatedAt { get; internal set; } = DateTime.UtcNow;
 
-        [Required, ForeignKey("User")]
+        [Required, Column(TypeName = "decimal(9, 6)")]
+        public decimal Latitude { get; set; }
+
+        [Required, Column(TypeName = "decimal(9, 6)")]
+        public decimal Longitude { get; set; }
+
+
+        [ForeignKey("User")]
         public int UserId { get; set; }
 
-
-        [ForeignKey("Location") , JsonIgnore]
-        public int LocationId { get; set; }
-
-        public Location Location { get; set; }
-
-        public Image Image { get; set; }
-
         [JsonIgnore]
-        public User User { get; set; }
+        public virtual User User { get; set; }
+        public virtual Image Image { get; set; }
 
     }
 

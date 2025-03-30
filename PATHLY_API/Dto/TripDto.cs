@@ -9,7 +9,7 @@ namespace PATHLY_API.Dto
         public string EndLocation { get; set; }
         public decimal Distance { get; set; }
         public DateTime StartTime { get; set; } = DateTime.UtcNow;
-        public DateTime EndTime { get; set; }
+        public DateTime? EndTime { get; set; }
         public TripStatus Status { get; set; }
     }
 

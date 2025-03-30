@@ -14,7 +14,8 @@ public class Road
     public string Destination { get; set; }
 
     [Required]
-    public decimal Length { get; set; }
+    public decimal RoadLength { get; set; }
+
     [Required]
     public decimal QualityScore { get; set; }
 
@@ -23,13 +24,8 @@ public class Road
     public DateTime LastUpdate { get; internal set; } = DateTime.UtcNow;
 
 
-    [Required , ForeignKey("Trip")]
-    public int TripId { get; set; } 
-
-    public Trip Trip { get; set; }
     public QualityMetric QualityMetric { get; set; }
-    public ICollection<RoadAnomalies> RoadAnomalies { get; set; }
-
-    public ICollection<TripRoad> TripRoads { get; set; }
+    public virtual ICollection<RoadAnomaly> RoadAnomalies { get; set; } = new List<RoadAnomaly>();
+    public virtual ICollection<TripRoad> TripRoads { get; set; } = new List<TripRoad>();
 
 }

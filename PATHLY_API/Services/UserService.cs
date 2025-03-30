@@ -22,18 +22,18 @@ namespace PATHLY_API.Services
             _userManager = userManager;
         }
 
+
+
         // Change Email for user ✅  
         public async Task<string> ChangeEmailAsync(ClaimsPrincipal user, string newEmail, string password)
         {
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                     ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-            if (userIdClaim == null)
-                return "User ID not found.";
-
             var appUser = await _userManager.FindByIdAsync(userIdClaim);
-            if (appUser == null)
-                return "User not found.";
+
+            if (userIdClaim is null || appUser is null)
+                return "User is not found.";
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(appUser, password);
             if (!isPasswordValid)
@@ -43,7 +43,7 @@ namespace PATHLY_API.Services
                 return "New email cannot be the same as the current email.";
 
             var existingUser = await _userManager.FindByEmailAsync(newEmail);
-            if (existingUser != null)
+            if (existingUser is not null)
                 return "Email is already in use.";
 
             var token = await _userManager.GenerateChangeEmailTokenAsync(appUser, newEmail);
@@ -64,12 +64,10 @@ namespace PATHLY_API.Services
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                     ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-            if (userIdClaim == null)
-                return "User ID not found.";
-
             var appUser = await _userManager.FindByIdAsync(userIdClaim);
-            if (appUser == null)
-                return "User not found.";
+
+            if (userIdClaim is null || appUser is null)
+                return "User is not found.";
 
             var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(appUser, currentPassword);
             if (!isCurrentPasswordValid)
@@ -89,34 +87,67 @@ namespace PATHLY_API.Services
             return "Password changed successfully.";
         }
 
-
-        public async Task SubscribeToPlanAsync(int userId, int subscriptionPlanId)
+        // Get Subscription Status for User ✅
+        public async Task<List<object>> GetUserSubscriptionStatusAsync(int userId)
         {
+            var subscriptions = await _context.UserSubscriptions
+                .Where(s => s.UserId == userId)
+                .OrderByDescending(s => s.StartDate)
+                .Select(subscription => new
+                {
+                    UserId = "User ID: " + userId,
+                    PlanId = "Plan: " + subscription.SubscriptionPlanId,
+                    Status = subscription.Status.ToString(),
+                    Subscription_Start = subscription.StartDate.ToUniversalTime().ToString("yyyy-MM-dd THH:mm:ssZ"),
+                    Subscription_end = subscription.EndDate.ToUniversalTime().ToString("yyyy-MM-dd THH:mm:ssZ")
+                })
+                .ToListAsync<object>();
+
+            return subscriptions;
+        }
+
+        // Enable user to Subscribe To Plan without payment  (Temporarily) ✅
+        public async Task<string> SubscribeToPlanAsync(ClaimsPrincipal user, int subscriptionPlanId)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            var appUser = await _userManager.FindByIdAsync(userIdClaim);
+
+            if (userIdClaim is null || appUser is null)
+                return "User is not found.";
+
+
             var subscriptionPlan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
-            if (subscriptionPlan == null)
+            if (subscriptionPlan is null)
                 throw new ArgumentNullException(nameof(subscriptionPlan), "Subscription plan not found.");
+
+            var appDbUser = await _context.Users
+                .Include(u => u.UserSubscriptions)
+                .FirstOrDefaultAsync(u => u.Id.ToString() == userIdClaim);
+
+
+            if (appDbUser is null)
+                throw new Exception("User not found");
+
 
             if (subscriptionPlan.DurationInMonths <= 0)
                 throw new ArgumentException("Subscription duration must be greater than zero.", nameof(subscriptionPlan.DurationInMonths));
 
-            var user = await _context.Users
-                .Include(u => u.UserSubscriptions)
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            if (user == null)
-                throw new Exception("User not found");
 
             var newSubscription = new UserSubscription
             {
-                UserId = userId,
+                UserId = int.Parse(userIdClaim),
                 SubscriptionPlanId = subscriptionPlanId,
-                Status = SubscriptionStatus.Active,
                 StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths)
+                EndDate = DateTime.UtcNow.AddMonths(subscriptionPlan.DurationInMonths),
+                Status = SubscriptionStatus.Active,
             };
 
             _context.UserSubscriptions.Add(newSubscription);
             await _context.SaveChangesAsync();
+
+            return "Subscription successfully created.";
         }
 
         // Retrieve user's Trip Details
@@ -155,7 +186,6 @@ namespace PATHLY_API.Services
                     StartLocation = t.StartLocation,
                     EndLocation = t.EndLocation,
                     StartTime = t.StartTime,
-                    EndTime = t.EndTime,
                     Distance = t.Distance,
                     Status = t.Status
                 })

@@ -9,7 +9,7 @@ namespace PATHLY_API.Data
     {
         public ApplicationDbContext() { }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-        public DbSet<User> Users { get; set; }
+        public DbSet<Admin> Admins { get; set; }
         public DbSet<Road> Roads { get; set; }
         public DbSet<Trip> Trips { get; set; }
         public DbSet<Image> Images { get; set; }
@@ -17,7 +17,7 @@ namespace PATHLY_API.Data
         public DbSet<Search> Searchs { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Location> Locations { get; set; }
-        public DbSet<RoadAnomalies> RoadAnomalies { get; set; }
+        public DbSet<RoadAnomaly> RoadAnomalies { get; set; }
         public DbSet<QualityMetric> QualityMetrics { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
@@ -25,21 +25,15 @@ namespace PATHLY_API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Admin>().ToTable("Admins");
 
             // Ensure Identity tables are properly configured to use int keys
             modelBuilder.Entity<IdentityUserLogin<int>>().HasKey(l => new { l.LoginProvider, l.ProviderKey });
             modelBuilder.Entity<IdentityUserRole<int>>().HasKey(r => new { r.UserId, r.RoleId });
             modelBuilder.Entity<IdentityUserToken<int>>().HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
 
-            // Create Composite Key For TripRoad Class
-            modelBuilder.Entity<TripRoad>()
-                .HasKey(tr => new { tr.RoadId, tr.TripId });
 
-            // Ensuring a unique combination of UserId and SubscriptionPlanId
             modelBuilder.Entity<UserSubscription>()
-            .HasIndex(us => new { us.UserId, us.SubscriptionPlanId })
-            .IsUnique(); // This ensures a user cannot have multiple subscriptions for the same plan
+            .HasIndex(us => new { us.UserId, us.SubscriptionPlanId });
 
             // User - User Subscription Relationship
             modelBuilder.Entity<UserSubscription>()
@@ -67,18 +61,21 @@ namespace PATHLY_API.Data
 
             // User - Search Relationship
             modelBuilder.Entity<Search>()
-                .HasOne(sh => sh.User)
-                .WithMany()
-                .HasForeignKey(sh => sh.UserId)
+                .HasOne(s => s.User)
+                .WithMany(u => u.Searchs) 
+                .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Create Composite Key For TripRoad Class
+            modelBuilder.Entity<TripRoad>()
+                .HasKey(tr => new { tr.RoadId, tr.TripId });
 
             // Trip - TripRoad Relationship
             modelBuilder.Entity<Trip>()
                 .HasMany(t => t.TripRoads)
                 .WithOne(r => r.Trip)
                 .HasForeignKey(r => r.TripId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Road - TripRoad Relationship
             modelBuilder.Entity<Road>()
@@ -103,11 +100,12 @@ namespace PATHLY_API.Data
                  .OnDelete(DeleteBehavior.Restrict);
 
             // User - Location Relationship
-            modelBuilder.Entity<Location>()
-                    .HasOne(l => l.User)
-                    .WithMany()
-                    .HasForeignKey(l => l.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Location)
+                .WithOne(l => l.User)
+                .HasForeignKey<Location>(l => l.UserId) 
+                .OnDelete(DeleteBehavior.Cascade);
+
 
             // Road - QualityMetric Relationship
             modelBuilder.Entity<Road>()

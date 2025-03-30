@@ -15,16 +15,11 @@ namespace PATHLY_API.Controllers
     public class UserController : ControllerBase
     {
 
-        private readonly ReportService _reportService; 
-
         private readonly UserService _userService;
 
-        public UserController(UserService userService , ReportService reportService)
-        {
-            _userService = userService;
-            _reportService = reportService;
-        }
+        public UserController(UserService userService , ReportService reportService) => _userService = userService;
 
+        // Change Emaill for Users ✅
         [HttpPost("change-email")]
         public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailModel model)
         {
@@ -46,13 +41,14 @@ namespace PATHLY_API.Controllers
             };
         }
 
+        // Change Password for Users ✅
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = "Invalid data.", Errors = ModelState.Values.SelectMany(v => v.Errors) });
 
-            var result = await _userService.ChangePasswordAsync(User, model.CurrentPassword, model.NewPassword);
+            var result = await _userService.ChangePasswordAsync(User, model.Password, model.NewPassword);
 
             return result switch
             {
@@ -66,18 +62,33 @@ namespace PATHLY_API.Controllers
             };
         }
 
-        [HttpPost("create-report")]
-        public async Task<IActionResult> CreateReport([FromForm] string reportType, [FromForm] string description, [FromForm] IFormFile image, [FromForm] decimal latitude, [FromForm] decimal longitude)
+ 
+        [HttpPost("subscribe-to-plan")]
+        public async Task<IActionResult> SubscribeToPlan([FromQuery] int SubscriptionPlanId)
         {
-            var report = await _reportService.CreateReportAsync(reportType, description, User, image, latitude, longitude);
-            return CreatedAtAction(nameof(GetReports), new { userId = report.UserId }, report);
+            if (SubscriptionPlanId <= 0)
+                return BadRequest("Invalid subscription request.");
+
+            try
+            {
+                var user = HttpContext.User; 
+                await _userService.SubscribeToPlanAsync(User ,SubscriptionPlanId);
+
+                return Ok("Subscription is done successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
-       
-        [HttpGet("reports/userId/{userId}")] 
-        public async Task<IActionResult> GetReports(int userId)
+
+        [HttpGet("subscription-status")]
+        public async Task<IActionResult> GetUserSubscriptionStatus([FromQuery] int userId)
         {
-            var reports = await _reportService.GetUserReportsAsync(userId);
-            return Ok(reports);
+            var status = await _userService.GetUserSubscriptionStatusAsync(userId);
+            return Ok(new { subscriptions = status });
         }
+
+
     }
 }

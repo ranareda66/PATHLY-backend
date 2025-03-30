@@ -10,16 +10,21 @@ namespace PATHLY_API.Models
 
         [Required]
         public decimal SpeedBumpRate { get; set; }
+
         [Required]
         public decimal PotholeRate { get; set; }
+
         [Required]
         public decimal RoughnessRate { get; set; }
+
         [Required]
         public decimal GoodRoadRate { get; set; }
+
 
         [Required, ForeignKey("Road")]
         public int RoadId { get; set; }
 
-        public Road Road { get; set; }
+
+        public virtual Road Road { get; set; } 
     }
 }

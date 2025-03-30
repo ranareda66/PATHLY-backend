@@ -12,28 +12,29 @@ namespace PATHLY_API.Controllers
 
         public AdminController(AdminService adminService) => _adminService = adminService;
 
-        // Return a specific report using ID
-        [HttpGet("reports/{reportId}")]
-        public async Task<IActionResult> GetReportById(int reportId)
+
+        // Get All Reports Related to user ✅
+        [HttpGet("reports/user")]
+        public async Task<IActionResult> GetReports([FromQuery] int userId)
         {
-            var report = await _adminService.GetReportByIdAsync(reportId);
-            return Ok(report);
+            var reports = await _adminService.GetUserReportsAsync(userId);
+            return Ok(reports);
         }
 
         // Return Reports based on report status ✅
-        [HttpGet("reports/status/{status}")]
-        public async Task<IActionResult> GetReportsByStatus(ReportStatus status)
+        [HttpGet("reports/status")]
+        public async Task<IActionResult> GetReportsByStatus([FromQuery] ReportStatus? status)
         {
             var reports = await _adminService.GetReportsByStatusAsync(status);
             return Ok(reports);
         }
 
-        // Update Report Status
-        [HttpPut("reports/status/{reportId}")]
+        // Update Report Status ✅
+        [HttpPut("reports/{reportId}/newstatus")]
         public async Task<IActionResult> UpdateReportStatus(int reportId, [FromBody] ReportStatus newStatus)
         {
             var success = await _adminService.UpdateReportStatusAsync(reportId, newStatus);
-            return success ? Ok() : NotFound();
+            return success ? Ok("Report Status Updated successfully") : NotFound();
         }
     }
 

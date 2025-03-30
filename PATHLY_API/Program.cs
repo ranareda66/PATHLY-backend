@@ -11,42 +11,50 @@ using PATHLY_API.Services;
 using PATHLY_API.Services.AuthServices;
 using PATHLY_API.Services.EmailServices;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace PATHLY_API
 {
     public class Program
-	{
-		public static void Main(string[] args)
-		{
-            
+    {
+        public static void Main(string[] args)
+        {
+
             var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
+            // Add services to the container.
 
-			builder.Services.Configure<Jwt>(builder.Configuration.GetSection("JWT"));
-			builder.Services.Configure<PayPalSettings>(builder.Configuration.GetSection("PayPal"));
+            builder.Services.Configure<Jwt>(builder.Configuration.GetSection("JWT"));
+            builder.Services.Configure<PayPalSettings>(builder.Configuration.GetSection("PayPal"));
 
-			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
+            builder.Services.AddControllers();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<UserService>();
-			builder.Services.AddScoped<TripService>();
+            builder.Services.AddScoped<TripService>();
             builder.Services.AddScoped<AdminService>();
-			builder.Services.AddScoped<ReportService>();
-			builder.Services.AddScoped<SearchService>();
-			builder.Services.AddScoped<PaymentService>();
-			builder.Services.AddScoped<PayPalService>();
-			builder.Services.AddScoped<LocationService>();
+            builder.Services.AddScoped<ReportService>();
+            builder.Services.AddScoped<SearchService>();
+            builder.Services.AddScoped<PaymentService>();
+            builder.Services.AddScoped<PayPalService>();
+            builder.Services.AddScoped<LocationService>();
+            builder.Services.AddScoped<SubscriptionPlanService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IEmailService,EmailService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
 
             builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {
-                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider; 
+                options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
             })
               .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders(); 
+            .AddDefaultTokenProviders();
+
+            builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
 
             var connectionString = builder.Configuration.GetConnectionString("cs");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -55,26 +63,26 @@ namespace PATHLY_API
             });
 
             builder.Services.AddAuthentication(options =>
-			{
-				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-			})
-				.AddJwtBearer(o =>
-				{
-					o.RequireHttpsMetadata = false;
-					o.SaveToken = false;
-					o.TokenValidationParameters = new TokenValidationParameters
-					{
-						ValidateIssuerSigningKey = true,
-						ValidateIssuer = true,
-						ValidateAudience = true,
-						ValidateLifetime = true,
-						ValidIssuer = builder.Configuration["JWT:Issuer"],
-						ValidAudience = builder.Configuration["JWT:Audience"],
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
-						ClockSkew = TimeSpan.Zero
-					};
-				});
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                .AddJwtBearer(o =>
+                {
+                    o.RequireHttpsMetadata = false;
+                    o.SaveToken = false;
+                    o.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidIssuer = builder.Configuration["JWT:Issuer"],
+                        ValidAudience = builder.Configuration["JWT:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
 
             var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -92,21 +100,21 @@ namespace PATHLY_API
 
             var app = builder.Build();
 
-			// Configure the HTTP request pipeline.
-			//if (app.Environment.IsDevelopment())
-			//{
-				app.UseSwagger();
-				app.UseSwaggerUI();
-			//}
+            // Configure the HTTP request pipeline.
+            //if (app.Environment.IsDevelopment())
+            //{
+            //}
 
+              app.UseSwagger();
+              app.UseSwaggerUI();
             app.UseCookiePolicy();
             app.UseHttpsRedirection();
-			app.UseAuthentication();
-			app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseCors("AllowAll");
             app.MapControllers();
-			app.Run();
+            app.Run();
 
-		}
-	}
+        }
+    }
 }

@@ -13,7 +13,7 @@ namespace PATHLY_API.Services
         public async Task TrackUserLocationAsync(int userId, decimal latitude, decimal longitude)
         {
             var user = await _context.Users.FirstOrDefaultAsync(a => a.Id == userId);
-            if (user == null)
+            if (user is null)
                 throw new Exception("User not found");
 
             var lastLocation = await _context.Locations
@@ -30,7 +30,6 @@ namespace PATHLY_API.Services
                 UserId = userId,
                 Latitude = latitude,
                 Longitude = longitude,
-                UpdatedAt = DateTime.UtcNow
             };
 
             await _context.Locations.AddAsync(newlocation);
@@ -44,7 +43,7 @@ namespace PATHLY_API.Services
                 .OrderByDescending(ulh => ulh.UpdatedAt)
                 .FirstOrDefaultAsync();
 
-            if (location == null)
+            if (location is null)
                 throw new InvalidOperationException($"No location found for user with ID {userId}.");
 
             return location;

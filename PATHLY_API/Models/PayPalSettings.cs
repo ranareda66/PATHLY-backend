@@ -1,9 +1,17 @@
-﻿namespace PATHLY_API.Models
+﻿using PATHLY_API.Models.Enums;
+using System.ComponentModel.DataAnnotations;
+
+namespace PATHLY_API.Models
 {
-	public class PayPalSettings
-	{
-		public string ClientId { get; set; }
-		public string Secret { get; set; }
-		public string Environment { get; set; }
-	}
+    public class PayPalSettings
+    {
+        [Required]
+        public string ClientId { get; set; }
+
+        [Required]
+        public string Secret { get; set; }
+
+        [Required]
+        public PayPalEnvironment Environment { get; set; }
+    }
 }

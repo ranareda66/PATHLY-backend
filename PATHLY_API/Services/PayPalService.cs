@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using PATHLY_API.Data;
 using PATHLY_API.Models;
+using PATHLY_API.Models.Enums;
 using PayPalCheckoutSdk.Core;
 using PayPalCheckoutSdk.Orders;
-using PayPalCheckoutSdk.Payments;
+using PayPalEnvironment = PayPalCheckoutSdk.Core.PayPalEnvironment;
 
 namespace PATHLY_API.Services
 {
@@ -10,10 +13,10 @@ namespace PATHLY_API.Services
 	{
 		private readonly PayPalHttpClient _client;
 
-		public PayPalService(IOptions<PayPalSettings> payPal)
+		public PayPalService(IOptions<PayPalSettings> payPal )
 		{
-			var _payPal = payPal.Value;
-			PayPalEnvironment environment = _payPal.Environment.ToLower() switch
+            var _payPal = payPal.Value;
+			PayPalEnvironment environment = _payPal.Environment.ToString().ToLower() switch
 			{
 				"live" => new LiveEnvironment(_payPal.ClientId, _payPal.Secret),
 				_ => new SandboxEnvironment(_payPal.ClientId, _payPal.Secret) // Default to Sandbox
@@ -21,60 +24,72 @@ namespace PATHLY_API.Services
 			_client = new PayPalHttpClient(environment);
 		}
 
-		public async Task<string> CreateOrderAsync(decimal amount, string currency)
-		{
-			var order = new OrderRequest
-			{
-				CheckoutPaymentIntent = "CAPTURE",
-				PurchaseUnits = new List<PurchaseUnitRequest>
+		    public async Task<string> CreateOrderAsync(decimal? amount, string currency)
+		    {
+
+                if (amount is null || amount <= 0)
+                    throw new ArgumentException("Invalid amount for payment.");
+
+                var order = new OrderRequest
 			    {
-				   new PurchaseUnitRequest
-				   {
-				       AmountWithBreakdown = new AmountWithBreakdown
+				    CheckoutPaymentIntent = "CAPTURE",
+				    PurchaseUnits = new List<PurchaseUnitRequest>
+			        {
+				       new PurchaseUnitRequest
 				       {
-				       	  CurrencyCode = currency,
-				       	  Value = amount.ToString("F2") // Format to 2 decimal places
-                       }
-				   }
-			    }
-			};
+				           AmountWithBreakdown = new AmountWithBreakdown
+				           {
+				       	      CurrencyCode = currency,
+				       	      Value = amount?.ToString("F2") // Format to 2 decimal places
+                           }
+				       }
+			        }
+			    };
 
-			var request = new OrdersCreateRequest();
-			request.Prefer("return=representation");
-			request.RequestBody(order);
+			    var request = new OrdersCreateRequest();
+			    request.Prefer("return=representation");
+			    request.RequestBody(order);
 
-			var response = await _client.Execute(request);
-			return response.Result<Order>().Id; // Return PayPal Order ID
-		}
+                try
+                {
+                    var response = await _client.Execute(request);
+                    if (response.StatusCode != System.Net.HttpStatusCode.Created)
+                        throw new Exception($"PayPal order creation failed. Status Code: {response.StatusCode}");
 
-		public async Task<bool> CapturePaymentAsync(string orderId)
-		{
-			var getRequest = new OrdersGetRequest(orderId);
-			var getResponse = await _client.Execute(getRequest);
-			var order = getResponse.Result<Order>();
+                    return response.Result<Order>().Id;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error while creating PayPal order: {ex.Message}", ex);
+                }
+            }
 
-			Console.WriteLine($"Order ID: {order.Id}, Status: {order.Status}");
+        public async Task<bool> CaptureOrderAsync(string orderId)
+        {
+            var getRequest = new OrdersGetRequest(orderId);
+            var getResponse = await _client.Execute(getRequest);
+            var order = getResponse.Result<Order>();
 
-			if (order.Status != "APPROVED")
-			{
-				throw new InvalidOperationException("Order must be in APPROVED state before capture.");
-			}
+            Console.WriteLine($"Order ID: {order.Id}, Status: {order.Status}");
 
-			var request = new OrdersCaptureRequest(orderId);
+            if (order.Status != "APPROVED")
+                throw new InvalidOperationException("Order must be in APPROVED state before capture.");
 
-			try
-			{
-				var response = await _client.Execute(request);
+            var request = new OrdersCaptureRequest(orderId);
 
-				Console.WriteLine($"PayPal Response Status: {response.StatusCode}");
+            try
+            {
+                var response = await _client.Execute(request);
 
-				return response.StatusCode == System.Net.HttpStatusCode.Created;
-			}
-			catch (PayPalHttp.HttpException ex)
-			{
-				Console.WriteLine($"PayPal API Error: {ex.Message}");
-				throw;
-			}
-		}
-	}
+                Console.WriteLine($"PayPal Response Status: {response.StatusCode}");
+
+                return response.StatusCode == System.Net.HttpStatusCode.Created;
+            }
+            catch (PayPalHttp.HttpException ex)
+            {
+                Console.WriteLine($"PayPal API Error: {ex.Message}");
+                throw;
+            }
+        }
+    }
 }

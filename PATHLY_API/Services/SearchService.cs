@@ -25,7 +25,7 @@ public class SearchService
     {
         var search = _context.Searchs.FirstOrDefault(r => r.Id == searchId);
 
-        if (search == null)
+        if (search is null)
             throw new KeyNotFoundException($"Report with ID {searchId} not found.");
 
         _context.Searchs.Remove(search);

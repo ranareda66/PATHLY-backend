@@ -1,7 +1,10 @@
-﻿namespace PATHLY_API.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace PATHLY_API.Models
 {
     public class RevokeToken
     {
-        public string? Token { get; set; }
+        [Required]
+        public string Token { get; set; }
     }
 }

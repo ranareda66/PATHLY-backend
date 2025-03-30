@@ -24,14 +24,9 @@ namespace PATHLY_API.Services
             _userManager = userManager;
         }
 
-        public async Task<Report> CreateReportAsync(string reportType, string reportDescription, ClaimsPrincipal user, IFormFile image, decimal latitude, decimal longitude)
+        // Create Report from user ✅
+        public async Task<Report> CreateReportAsync(ReportRequestModel request, ClaimsPrincipal user)
         {
-            if (!Enum.TryParse(typeof(ReportType), reportType, true, out var validReportType))
-                throw new ArgumentException($"Invalid report type. Allowed values: {string.Join(", ", Enum.GetNames(typeof(ReportType)))}");
-
-
-            if (string.IsNullOrWhiteSpace(reportDescription))
-                throw new ArgumentException("Report description cannot be empty.", nameof(reportDescription));
 
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                 ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
@@ -40,80 +35,79 @@ namespace PATHLY_API.Services
             if (!int.TryParse(userIdClaim, out int userId))
                 throw new UnauthorizedAccessException($"Invalid User ID format. Value received: '{userIdClaim}'");
 
-
-
-            Location location = null;
-
-            if (latitude != 0 && longitude != 0)
-            {
-                int locationId = await GetLocationIdByCoordinatesAsync(latitude, longitude);
-
-                if (locationId == 0)
-                {
-                    // Create New Location if not Exists
-                    location = new Location
-                    {
-                        Latitude = latitude,
-                        Longitude = longitude,
-                        UserId = userId
-                    };
-
-                    _context.Locations.Add(location);
-                    await _context.SaveChangesAsync();
-                }
-                else
-                    location = await _context.Locations.FindAsync(locationId);
-            }
-
             var report = new Report
             {
-                ReportType = (ReportType)validReportType,
-                Description = reportDescription.Trim(),
-                Status = ReportStatus.Pending,
-                CreatedAt = DateTime.UtcNow,
-                Location = location,
+                ReportType = request.ReportType.Value,
+                Description = request.Description.Trim(),
+                Latitude = request.Latitude.Value,
+                Longitude = request.Longitude.Value,
                 UserId = userId
             };
+
 
             await _context.Reports.AddAsync(report);
             await _context.SaveChangesAsync();
 
-            if (image is not null && image.Length > 0)
-                await UploadImageAsync(report.Id, image);
+            if (request.Image is not null && request.Image.Length > 0)
+                await UploadImageAsync(report.Id, request.Image);
 
             return report;
         }
 
-        private async Task<int> GetLocationIdByCoordinatesAsync(decimal latitude, decimal longitude)
+        // Search for Report By ID ✅
+        public async Task<Report> GetReportByIdAsync(int reportId)
         {
-            var location = await _context.Locations
-                .FirstOrDefaultAsync(l => Math.Abs(l.Latitude - latitude) < 0.0001M && Math.Abs(l.Longitude - longitude) < 0.0001M);
-            return location?.Id ?? 0;  
-        }
+            if (reportId <= 0)
+                throw new ArgumentException("Invalid Report ID.");
 
+            var report = await _context.Reports
+                .Include(r => r.Image)
+                .FirstOrDefaultAsync(r => r.Id == reportId);
+
+            if (report is null)
+                throw new KeyNotFoundException($"Report with ID {reportId} not found.");
+
+            return new Report
+            {
+                Id = report.Id,
+                Description = report.Description,
+                ReportType = report.ReportType,
+                CreatedAt = report.CreatedAt,
+                Status = report.Status,
+                UserId = report.UserId,
+                Latitude = report.Latitude,
+                Longitude = report.Longitude,
+                Image = report.Image
+            };
+        }
         private async Task<Image> UploadImageAsync(int reportId, IFormFile file)
         {
 
-            if (file == null || file.Length == 0)
+            if (file?.Length <= 0)
                 throw new ArgumentException("File is not valid");
 
-            var reportExists = await _context.Reports.AnyAsync(r => r.Id == reportId);
-            if (!reportExists)
+            string fileExtension = Path.GetExtension(file.FileName).ToLower();
+            var allowedExtensions = new HashSet<string> { ".jpg", ".jpeg", ".png" };
+
+            if (!allowedExtensions.Contains(fileExtension))
+                throw new ArgumentException("Invalid file type. Only JPG and PNG are allowed.");
+
+            long maxFileSize = 5 * 1024 * 1024; 
+            if (file.Length > maxFileSize)
+                throw new ArgumentException("File size exceeds the allowed limit of 5MB.");
+
+            if (!await _context.Reports.AnyAsync(r => r.Id == reportId))
                 throw new KeyNotFoundException($"Report with ID {reportId} not found.");
 
-            if (string.IsNullOrEmpty(_environment.WebRootPath))
-                throw new InvalidOperationException("Web root path is not configured.");
+            string webRootPath = _environment.WebRootPath ?? throw new InvalidOperationException("Web root path is not configured.");
 
-            string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            string uploadsFolder = Path.Combine(webRootPath, "Uploads");
+            Directory.CreateDirectory(uploadsFolder);
 
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-
-            string fileExtension = Path.GetExtension(file.FileName);
-            string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+            string uniqueFileName = $"{DateTime.UtcNow.Ticks}_{Guid.NewGuid()}{fileExtension}";
             string imagePath = Path.Combine(uploadsFolder, uniqueFileName);
-            string relativePath = $"uploads/{uniqueFileName}";
+            string relativePath = Path.Combine("Uploads", uniqueFileName).Replace("\\", "/"); 
+
 
             using (var stream = new FileStream(imagePath, FileMode.Create))
                 await file.CopyToAsync(stream);
@@ -123,9 +117,6 @@ namespace PATHLY_API.Services
             {
                 ReportId = reportId,
                 ImagePath = relativePath,
-                ImageType = file.ContentType,
-                ImageName = Path.GetFileName(file.FileName),
-                ImageSize = file.Length,
             };
 
             _context.Images.Add(image);
@@ -133,29 +124,6 @@ namespace PATHLY_API.Services
 
             return image;
         }
-
-        // Get All Reports Related to specific user ✅
-        public async Task<List<Report>> GetUserReportsAsync(int userId)
-        {
-            if (userId <= 0)
-                throw new ArgumentException("Invalid user ID.");
-
-            return await _context.Reports
-                .Where(r => r.UserId == userId)
-                .OrderBy(r => r.CreatedAt)
-                .Select(report => new Report
-                {
-                    Id = report.Id,
-                    Description = report.Description,
-                    ReportType = report.ReportType,
-                    CreatedAt = report.CreatedAt,
-                    Status = report.Status,
-                    UserId = report.UserId,
-                    Location = report.Location,
-                    Image = report.Image
-                })
-                .ToListAsync();
-        }
-
+       
     }
 }

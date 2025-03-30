@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace PATHLY_API.Models
-{
+{ 
     public class LoginModel
     {
         [Required, EmailAddress]

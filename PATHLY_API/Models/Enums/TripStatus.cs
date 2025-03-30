@@ -5,5 +5,5 @@
         InProgress,
         Cancelled,
         Completed
-    }
+    } 
 }

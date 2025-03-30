@@ -18,17 +18,19 @@ namespace PATHLY_API.Models
         public decimal Distance { get; set; }
 
         public DateTime StartTime { get; internal set; } = DateTime.UtcNow;
-        public DateTime EndTime { get; set; }
+        public DateTime? EndTime { get; set; }
 
         [Required]
         public TripStatus Status { get; set; }
 
-        public int? FeedbackRate { get; set; } = 0;
+        [Range(1, 5)]
+        public int? FeedbackRate { get; set; } = null;
+
 
         [Required, ForeignKey("User")]
         public int UserId { get; set; }
-        public User User { get; set; }
+        public virtual User User { get; set; }
 
-        public ICollection<TripRoad> TripRoads { get; set; }
+        public virtual ICollection<TripRoad> TripRoads { get; set; } = new List<TripRoad>(); 
     }
 }

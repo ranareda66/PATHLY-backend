@@ -12,59 +12,63 @@ namespace PATHLY_API.Services
 
         public AdminService(ApplicationDbContext context) => _context = context;
 
-        // Search for Report By ID ✅
-        public async Task<Report> GetReportByIdAsync(int reportId)
+        // Get All Reports Related to specific user ✅
+        public async Task<List<Report>> GetUserReportsAsync(int userId)
         {
-            if (reportId <= 0)
-                throw new ArgumentException("Invalid Report ID.");
+            if (userId <= 0)
+                throw new ArgumentException("Invalid user ID.");
 
-            var report = await _context.Reports
-                .Include(r => r.Image)
-                .FirstOrDefaultAsync(r => r.Id == reportId);
-
-            if (report == null)
-                throw new KeyNotFoundException($"Report with ID {reportId} not found.");
-
-            return new Report
-            {
-                Id = report.Id,
-                Description = report.Description,
-                ReportType = report.ReportType,
-                CreatedAt = report.CreatedAt,
-                Status = report.Status,
-                UserId = report.UserId,
-                Location = report.Location,
-                Image = report.Image
-            };
-        }
-
-        // Return Reports based on report status ✅
-        public async Task<List<Report>> GetReportsByStatusAsync(ReportStatus status)
-        {
             return await _context.Reports
-                .Where(r => r.Status == status)
+                .Where(r => r.UserId == userId)
                 .OrderBy(r => r.CreatedAt)
                 .Select(report => new Report
-                    {
+                {
                     Id = report.Id,
                     Description = report.Description,
                     ReportType = report.ReportType,
                     CreatedAt = report.CreatedAt,
                     Status = report.Status,
                     UserId = report.UserId,
-                    Location = report.Location,
+                    Latitude = report.Latitude,
+                    Longitude = report.Longitude,
                     Image = report.Image
-                    })
+                })
                 .ToListAsync();
         }
 
-        // Update the report status (approval or rejection)
+        // Return Reports based on report status ✅
+        public async Task<List<Report>> GetReportsByStatusAsync(ReportStatus? status)
+        {
+            var query = _context.Reports.AsQueryable();  
+
+            if (status.HasValue)
+                query = query.Where(r => r.Status == status.Value); 
+
+            return await query
+                .OrderBy(r => r.CreatedAt)
+                .Select(report => new Report
+                {
+                    Id = report.Id,
+                    Description = report.Description,
+                    ReportType = report.ReportType,
+                    CreatedAt = report.CreatedAt,
+                    Status = report.Status,
+                    UserId = report.UserId,
+                    Latitude = report.Latitude,
+                    Longitude = report.Longitude,
+                    Image = report.Image
+                })
+                .ToListAsync();
+        }
+
+        // Update the report status (approval or rejection) ✅
         public async Task<bool> UpdateReportStatusAsync(int reportId, ReportStatus newStatus)
         {
             var report = await _context.Reports.FindAsync(reportId);
-            if (report == null) return false;
+            if (report is null) return false;
 
             report.Status = newStatus;
+            _context.Entry(report).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return true;
         }
@@ -165,7 +169,7 @@ namespace PATHLY_API.Services
             road.Id = roadDto.Id;
             road.Start = roadDto.Start;
             road.Destination = roadDto.Destination;
-            road.Length = roadDto.Length;
+            road.RoadLength = roadDto.Length;
             road.QualityScore = roadDto.QualityScore;
             road.Quality = roadDto.Quality;
             road.LastUpdate = roadDto.LastUpdate;

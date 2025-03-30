@@ -1,5 +1,4 @@
-﻿
-namespace PATHLY_API.Models.Enums
+﻿namespace PATHLY_API.Models.Enums
 {
     public enum SubscriptionStatus
     {
