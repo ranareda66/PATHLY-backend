@@ -1,14 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PATHLY_API.Data;
-using PATHLY_API.Models;
-using PATHLY_API.Models.Enums;
 
 namespace PATHLY_API.Services
 {
     public class SubscriptionPlanService
     {
         private readonly ApplicationDbContext _context;
-
         public SubscriptionPlanService(ApplicationDbContext context) => _context = context;
 
         // Get All Subscription Plans in App ✅
@@ -21,11 +18,10 @@ namespace PATHLY_API.Services
                     plan.Name,
                     plan.Description,
                     plan.Price,
-                    DurationInMonths = plan.DurationInMonths + " months",
+                    DurationInMonths = plan.DurationInMonths + " Months",
                     Currency = "USD"
                 })
                 .ToListAsync<object>();
         }
-
     }
 }

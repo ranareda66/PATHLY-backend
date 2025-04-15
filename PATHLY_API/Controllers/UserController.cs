@@ -1,12 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Mvc;
 using PATHLY_API.Models;
 using PATHLY_API.Services;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace PATHLY_API.Controllers
 {
@@ -14,10 +8,8 @@ namespace PATHLY_API.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-
         private readonly UserService _userService;
-
-        public UserController(UserService userService , ReportService reportService) => _userService = userService;
+        public UserController(UserService userService) => _userService = userService;
 
         // Change Emaill for Users ✅
         [HttpPost("change-email")]
@@ -62,7 +54,7 @@ namespace PATHLY_API.Controllers
             };
         }
 
- 
+
         [HttpPost("subscribe-to-plan")]
         public async Task<IActionResult> SubscribeToPlan([FromQuery] int SubscriptionPlanId)
         {
@@ -71,9 +63,8 @@ namespace PATHLY_API.Controllers
 
             try
             {
-                var user = HttpContext.User; 
-                await _userService.SubscribeToPlanAsync(User ,SubscriptionPlanId);
-
+                var user = HttpContext.User;
+                await _userService.SubscribeToPlanAsync(User, SubscriptionPlanId);
                 return Ok("Subscription is done successfully.");
             }
             catch (Exception ex)
@@ -88,7 +79,5 @@ namespace PATHLY_API.Controllers
             var status = await _userService.GetUserSubscriptionStatusAsync(userId);
             return Ok(new { subscriptions = status });
         }
-
-
     }
 }

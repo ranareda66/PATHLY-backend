@@ -19,10 +19,8 @@ namespace PATHLY_API.Models
         [Required]
         public SubscriptionStatus Status { get; set; }
 
-
         [Required, ForeignKey("User")]
         public int UserId { get; set; }
-
 
         [Required, ForeignKey("SubscriptionPlan")]
         public int SubscriptionPlanId { get; set; }

@@ -8,14 +8,9 @@ namespace PATHLY_API.Models
     {
         [Key, ForeignKey("User")]
         public int UserId { get; set; }
+        public string Address { get; set; }
 
-        [Required, Column(TypeName = "decimal(9, 6)")]
-        public decimal Latitude { get; set; }
-
-        [Required, Column(TypeName = "decimal(9, 6)")]
-        public decimal Longitude { get; set; }
-
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; }
 
         [JsonIgnore]
         public virtual User User { get; set; }

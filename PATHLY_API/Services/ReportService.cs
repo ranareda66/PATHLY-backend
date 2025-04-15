@@ -16,12 +16,10 @@ namespace PATHLY_API.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
-        private readonly UserManager<User> _userManager;
-        public ReportService(ApplicationDbContext context, IWebHostEnvironment environment, UserManager<User> userManager)
+        public ReportService(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
             _environment = environment ?? throw new ArgumentNullException(nameof(environment));
-            _userManager = userManager;
         }
 
         // Create Report from user ✅

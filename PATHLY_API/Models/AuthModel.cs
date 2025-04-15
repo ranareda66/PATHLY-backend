@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace PATHLY_API.Models
+﻿namespace PATHLY_API.Models
 {
     public class AuthModel
     {

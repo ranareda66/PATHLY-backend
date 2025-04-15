@@ -5,6 +5,7 @@ using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
 using PayPalCheckoutSdk.Core;
 using PayPalCheckoutSdk.Orders;
+using System.Net;
 using PayPalEnvironment = PayPalCheckoutSdk.Core.PayPalEnvironment;
 
 namespace PATHLY_API.Services
@@ -24,45 +25,45 @@ namespace PATHLY_API.Services
 			_client = new PayPalHttpClient(environment);
 		}
 
-		    public async Task<string> CreateOrderAsync(decimal? amount, string currency)
-		    {
+        public async Task<string> CreateOrderAsync(decimal? amount, string currency)
+        {
 
-                if (amount is null || amount <= 0)
-                    throw new ArgumentException("Invalid amount for payment.");
+            if (amount is null || amount <= 0)
+                throw new ArgumentException("Invalid amount for payment.");
 
-                var order = new OrderRequest
-			    {
-				    CheckoutPaymentIntent = "CAPTURE",
-				    PurchaseUnits = new List<PurchaseUnitRequest>
-			        {
-				       new PurchaseUnitRequest
-				       {
-				           AmountWithBreakdown = new AmountWithBreakdown
-				           {
-				       	      CurrencyCode = currency,
-				       	      Value = amount?.ToString("F2") // Format to 2 decimal places
+            var order = new OrderRequest
+            {
+                CheckoutPaymentIntent = "CAPTURE",
+                PurchaseUnits = new List<PurchaseUnitRequest>
+                    {
+                       new PurchaseUnitRequest
+                       {
+                           AmountWithBreakdown = new AmountWithBreakdown
+                           {
+                                 CurrencyCode = currency,
+                                 Value = amount?.ToString("F2") // Format to 2 decimal places
                            }
-				       }
-			        }
-			    };
+                       }
+                    }
+            };
 
-			    var request = new OrdersCreateRequest();
-			    request.Prefer("return=representation");
-			    request.RequestBody(order);
+            var request = new OrdersCreateRequest();
+            request.Prefer("return=representation");
+            request.RequestBody(order);
 
-                try
-                {
-                    var response = await _client.Execute(request);
-                    if (response.StatusCode != System.Net.HttpStatusCode.Created)
-                        throw new Exception($"PayPal order creation failed. Status Code: {response.StatusCode}");
+            try
+            {
+                var response = await _client.Execute(request);
+                if (response.StatusCode != System.Net.HttpStatusCode.Created)
+                    throw new Exception($"PayPal order creation failed. Status Code: {response.StatusCode}");
 
-                    return response.Result<Order>().Id;
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Error while creating PayPal order: {ex.Message}", ex);
-                }
+                return response.Result<Order>().Id;
             }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error while creating PayPal order: {ex.Message}", ex);
+            }
+        }
 
         public async Task<bool> CaptureOrderAsync(string orderId)
         {
@@ -70,7 +71,6 @@ namespace PATHLY_API.Services
             var getResponse = await _client.Execute(getRequest);
             var order = getResponse.Result<Order>();
 
-            Console.WriteLine($"Order ID: {order.Id}, Status: {order.Status}");
 
             if (order.Status != "APPROVED")
                 throw new InvalidOperationException("Order must be in APPROVED state before capture.");

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PATHLY_API.Dto;
 
 namespace PATHLY_API.Controllers
 {
@@ -39,25 +38,26 @@ namespace PATHLY_API.Controllers
             }
         }
 
-		[HttpPost("capture")]
-		public async Task<IActionResult> CapturePayment([FromForm] string orderId)
-		{
-			try
-			{
-				bool success = await _paymentService.CapturePaymentAsync(orderId);
-				return Ok(new { Success = success });
-			}
-			catch (KeyNotFoundException ex)
-			{
-				return NotFound(ex.Message);
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
-			}
-		}
 
-		[HttpPost("cancel")]
+        [HttpPost("capture")]
+        public async Task<IActionResult> CapturePayment([FromForm] string orderId)
+        {
+            try
+            {
+                bool success = await _paymentService.CapturePaymentAsync(orderId);
+                return Ok(new { Success = success });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
+            }
+        }
+
+        [HttpPost("cancel")]
 		public async Task<IActionResult> CancelPayment([FromForm] string orderId)
 		{
 			try

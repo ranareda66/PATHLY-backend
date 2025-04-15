@@ -9,9 +9,7 @@ namespace PATHLY_API.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AdminService _adminService;
-
         public AdminController(AdminService adminService) => _adminService = adminService;
-
 
         // Get All Reports Related to user ✅
         [HttpGet("reports/user")]
@@ -37,5 +35,4 @@ namespace PATHLY_API.Controllers
             return success ? Ok("Report Status Updated successfully") : NotFound();
         }
     }
-
 }

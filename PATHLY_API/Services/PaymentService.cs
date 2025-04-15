@@ -57,7 +57,7 @@ public class PaymentService
             SubscriptionPlanId = subscriptionPlanId,
             Amount = plan.Price,
             PaymentMethod = PaymentMethodType.PayPal,
-            TransactionId = orderId 
+            TransactionId = orderId
         };
 
         _context.Payments.Add(payment);
@@ -156,11 +156,13 @@ public class PaymentService
     public async Task<bool> CancelPaymentAsync(string orderId)
     {
         var payment = await _context.Payments.FirstOrDefaultAsync(p => p.TransactionId == orderId);
-        if (payment == null) throw new KeyNotFoundException("Payment not found.");
+        if (payment is null) throw new KeyNotFoundException("Payment not found.");
 
         payment.PaymentStatus = PaymentStatus.Cancelled;
         await _context.SaveChangesAsync();
 
         return true;
     }
+
+
 }

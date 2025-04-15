@@ -9,7 +9,6 @@ namespace PATHLY_API.Controllers
 	public class AuthController : ControllerBase
 	{
 		private readonly IAuthService _authService;
-
 		public AuthController(IAuthService authService) => _authService = authService;
 
         [HttpPost("register")]
@@ -105,20 +104,33 @@ namespace PATHLY_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("verify-code")]
+        public async Task<IActionResult> VerifyResetCode([FromBody] VerifyCodeModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.VerifyResetCodeAsync(model.Email, model.Code);
+
+            if (result == "Incorrect or invalid Code")
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPasswordWithCode([FromBody] ResetPasswordModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _authService.ResetPasswordWithCodeAsync(model.Email, model.Code, model.NewPassword, model.ConfirmPassword);
+            var result = await _authService.ResetPasswordWithCodeAsync(model.Email, model.NewPassword, model.ConfirmPassword);
 
             if (result == "User not found." || result == "Invalid or expired code." || result == "Failed to reset password." || result == "The new password and confirmation password do not match.")
                 return BadRequest(result);
 
             return Ok(result);
         }
-
         private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
         {
             var cookieOptions = new CookieOptions

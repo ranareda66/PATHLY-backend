@@ -12,8 +12,8 @@ using PATHLY_API.Data;
 namespace PATHLY_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250330055043_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250415232612_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -170,11 +170,9 @@ namespace PATHLY_API.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("decimal(9, 6)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("decimal(9, 6)");
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -325,6 +323,10 @@ namespace PATHLY_API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("FormattedAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Latitude")
                         .HasColumnType("decimal(18,2)");
 
@@ -378,8 +380,8 @@ namespace PATHLY_API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Distance")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double>("Distance")
+                        .HasColumnType("float");
 
                     b.Property<string>("EndLocation")
                         .IsRequired()

@@ -15,7 +15,7 @@ namespace PATHLY_API.Models
         public string EndLocation { get; set; }
 
         [Required]
-        public decimal Distance { get; set; }
+        public double Distance { get; set; }
 
         public DateTime StartTime { get; internal set; } = DateTime.UtcNow;
         public DateTime? EndTime { get; set; }

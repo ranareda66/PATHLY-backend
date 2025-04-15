@@ -2,7 +2,6 @@
 
 namespace PATHLY_API.Models
 {
-  
     public class ForgotPasswordModel
     {
         [Required, EmailAddress]

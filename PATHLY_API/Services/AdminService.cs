@@ -99,7 +99,7 @@ namespace PATHLY_API.Services
         public async Task<bool> UpdateUserAsync(int userId, UserDto updatedUser)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return false;
+            if (user is null) return false;
 
             user.UserName = updatedUser.UserName;
             user.Email = updatedUser.Email;
@@ -114,7 +114,7 @@ namespace PATHLY_API.Services
         public async Task<bool> ToggleUserStatusAsync(int userId, bool isActive)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return false;
+            if (user is null) return false;
 
             user.IsActive = isActive;
             await _context.SaveChangesAsync();
@@ -125,7 +125,7 @@ namespace PATHLY_API.Services
         public async Task<bool> DeleteAccountAsync(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null)
+            if (user is null)
                 return false;
 
             _context.Users.Remove(user);
@@ -185,7 +185,7 @@ namespace PATHLY_API.Services
         public async Task<bool> UpdateRoadQualityAsync(int roadId, RoadQuality quality)
         {
             var road = await _context.Roads.FindAsync(roadId);
-            if (road == null) return false;
+            if (road is null) return false;
 
             road.Quality = quality;
             await _context.SaveChangesAsync();
@@ -196,7 +196,7 @@ namespace PATHLY_API.Services
         public bool UpdateQualityMetrics(int roadId, QualityMetric updatedQualityMetric)
         {
             var road = _context.Roads.FirstOrDefault(r => r.Id == roadId);
-            if (road == null)
+            if (road is null)
                 throw new ArgumentException("Road not found.", nameof(roadId));
 
             if (road.QualityMetric == null)
@@ -209,7 +209,7 @@ namespace PATHLY_API.Services
                 var oldValue = property.GetValue(road.QualityMetric);
                 var newValue = property.GetValue(updatedQualityMetric);
 
-                if (newValue != null && !newValue.Equals(oldValue))
+                if (newValue is not null && !newValue.Equals(oldValue))
                 {
                     property.SetValue(road.QualityMetric, newValue);
                     isUpdated = true;

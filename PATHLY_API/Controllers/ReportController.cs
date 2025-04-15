@@ -13,7 +13,6 @@ namespace PATHLY_API.Controllers
         private readonly ReportService _reportService;
         public ReportController(ReportService reportService) => _reportService = reportService;
 
-
         // Create Report for Users ✅
         [HttpPost("Create")]
         public async Task<IActionResult> CreateReport([FromForm] ReportRequestModel request)

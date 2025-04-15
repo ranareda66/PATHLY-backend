@@ -15,6 +15,9 @@ namespace PATHLY_API.Models
         [Required , Range(-180, 180)]
         public decimal Longitude { get; set; }
 
+        [Required]
+        public string FormattedAddress { get; set; }
+
 
         [Required , ForeignKey("User")]
         public int UserId { get; set; }

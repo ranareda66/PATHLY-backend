@@ -1,8 +1,6 @@
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PATHLY_API.Data;
 using PATHLY_API.JWT;
@@ -38,10 +36,15 @@ namespace PATHLY_API
             builder.Services.AddScoped<SearchService>();
             builder.Services.AddScoped<PaymentService>();
             builder.Services.AddScoped<PayPalService>();
-            builder.Services.AddScoped<LocationService>();
             builder.Services.AddScoped<SubscriptionPlanService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddHostedService<SubscriptionExpirationService>();
+            builder.Services.AddScoped<IRoadService, RoadService>();
+            builder.Services.AddHttpClient<GooglePlacesService>();
+            builder.Services.AddHttpClient<GoogleMapsService>();
+            builder.Services.AddScoped<GoogleMapsService>();
+            builder.Services.AddHttpClient();
 
             builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {
@@ -61,6 +64,8 @@ namespace PATHLY_API
             {
                 options.UseSqlServer(connectionString);
             });
+
+
 
             builder.Services.AddAuthentication(options =>
             {
@@ -101,12 +106,12 @@ namespace PATHLY_API
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            //if (app.Environment.IsDevelopment())
-            //{
-            //}
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
-              app.UseSwagger();
-              app.UseSwaggerUI();
             app.UseCookiePolicy();
             app.UseHttpsRedirection();
             app.UseAuthentication();

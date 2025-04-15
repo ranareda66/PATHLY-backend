@@ -1,29 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PATHLY_API.Data;
-using PATHLY_API.Dto;
+﻿using PATHLY_API.Data;
 using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
-
 
 namespace PATHLY_API.Services
 {
     public class TripService
     {
         private readonly ApplicationDbContext _context;
+        private readonly GoogleMapsService _googleMapsService;
 
-        public TripService(ApplicationDbContext context) => _context = context;
-
-        public void StartTrip(int userId , string startLocation, string endLocation, decimal distance)
+        public TripService(ApplicationDbContext context , GoogleMapsService googleMapsService)
         {
-
+            _context = context;
+            _googleMapsService = googleMapsService;
+        }
+        public void StartTrip(int userId , string startLocation, string endLocation)
+        {
             if (string.IsNullOrWhiteSpace(startLocation) || string.IsNullOrWhiteSpace(endLocation))
                 throw new ArgumentException("Start and End locations cannot be empty.");
 
-            if (distance <= 0)
-                throw new ArgumentException("Distance and Duration must be greater than zero.");
+            var distance = _googleMapsService.GetDistanceBetweenPlacesByName(startLocation, endLocation).Result;
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null)
+            if (user is null)
                 throw new Exception("User not found");
 
             var trip = new Trip
@@ -44,7 +43,7 @@ namespace PATHLY_API.Services
         public bool AbortTrip(int tripId)
         {
             var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip == null)
+            if (trip is null)
                 throw new KeyNotFoundException("Trip not found.");
 
             if (trip.Status is TripStatus.Cancelled or TripStatus.Completed)
@@ -59,7 +58,7 @@ namespace PATHLY_API.Services
         public bool EndTrip(int tripId, int? feedback = null)
         {
             var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip == null)
+            if (trip is null)
                 throw new KeyNotFoundException("Trip not found.");
 
             if (trip.Status == TripStatus.Cancelled || trip.Status == TripStatus.Completed)
@@ -77,11 +76,10 @@ namespace PATHLY_API.Services
             return _context.SaveChanges() > 0;
         }
 
-
         public bool DeleteTrip(int tripId)
         {
             var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip == null)
+            if (trip is null)
                 throw new KeyNotFoundException("Trip not found.");
 
             if (trip.Status != TripStatus.Cancelled)

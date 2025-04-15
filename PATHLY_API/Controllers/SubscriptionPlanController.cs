@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PATHLY_API.Services;
 
 namespace PATHLY_API.Controllers
@@ -9,10 +8,7 @@ namespace PATHLY_API.Controllers
     public class SubscriptionPlanController : ControllerBase
     {
         private readonly SubscriptionPlanService _subscriptionService;
-
-        public SubscriptionPlanController(SubscriptionPlanService subscriptionService)
-            => _subscriptionService = subscriptionService;
-
+        public SubscriptionPlanController(SubscriptionPlanService subscriptionService) => _subscriptionService = subscriptionService;
 
         // Get All Subscription Plans ✅
         [HttpGet]

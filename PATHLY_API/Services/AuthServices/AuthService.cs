@@ -195,7 +195,7 @@ namespace PATHLY_API.Services.AuthServices
         public async Task<string> SendPasswordResetCodeAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
+            if (user is null)
                 return "User not found.";
 
            
@@ -217,23 +217,28 @@ namespace PATHLY_API.Services.AuthServices
 
             return "Password reset code has been sent to your email.";
         }
-        public async Task<string> ResetPasswordWithCodeAsync(string email, string code, string newPassword, string confirmPassword)
+
+        public async Task<string> VerifyResetCodeAsync(string email, string code)
+        {
+            var resetCode = await _context.PasswordResetCodes
+                .FirstOrDefaultAsync(r => r.Email == email && r.Code == code);
+
+            if (resetCode is null || resetCode.ExpirationTime < DateTime.UtcNow)
+                return "Incorrect or invalid Code";
+
+            return "Verifing Done successfully.";
+        }
+
+
+        public async Task<string> ResetPasswordWithCodeAsync(string email, string newPassword, string confirmPassword)
         {
 
-
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+                return "User not found.";
 
             if (newPassword != confirmPassword)
                 return "The new password and confirmation password do not match.";
-
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-                return "User not found.";
-
-            var resetCode = await _context.PasswordResetCodes
-                .FirstOrDefaultAsync(rc => rc.Email == email && rc.Code == code);
-
-            if (resetCode == null || resetCode.ExpirationTime < DateTime.UtcNow)
-                return "Invalid or expired code.";
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
@@ -241,14 +246,13 @@ namespace PATHLY_API.Services.AuthServices
             if (!result.Succeeded)
                 return "Failed to reset password.";
 
-            _context.PasswordResetCodes.Remove(resetCode);
             user.RefreshTokens?.Clear();
             await _userManager.UpdateAsync(user);
             await _context.SaveChangesAsync();
 
             return "Password has been reset successfully.";
-
         }
+
         private RefreshToken GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
