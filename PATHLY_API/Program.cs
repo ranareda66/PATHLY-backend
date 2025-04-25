@@ -45,8 +45,9 @@ namespace PATHLY_API
             builder.Services.AddHttpClient<GoogleMapsService>();
             builder.Services.AddScoped<GoogleMapsService>();
             builder.Services.AddHttpClient();
+			builder.Services.AddHttpClient<IRoadPredictionService, RoadPredictionService>();
 
-            builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+			builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {
                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
             })
