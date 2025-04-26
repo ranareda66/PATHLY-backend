@@ -7,8 +7,8 @@ namespace PATHLY_API.Controllers
     [Route("api/[controller]")]
     public class TrafficController : ControllerBase
     {
-        private readonly GoogleMapsService _googleMapsService;
-        public TrafficController(GoogleMapsService googleMapsService) => _googleMapsService = googleMapsService;
+        private readonly GoogleTrafficService _googleMapsService;
+        public TrafficController(GoogleTrafficService googleMapsService) => _googleMapsService = googleMapsService;
 
         [HttpGet("{placeName}")]
         public async Task<IActionResult> GetTrafficData(string placeName)

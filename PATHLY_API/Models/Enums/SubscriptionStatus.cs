@@ -3,6 +3,6 @@
     public enum SubscriptionStatus
     {
         Active = 1,
-        Expired
+        Expired = 2
     }
 }

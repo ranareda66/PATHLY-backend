@@ -8,10 +8,10 @@ namespace PATHLY_API.Controllers
     [ApiController]
     public class MapsController : ControllerBase
     {
-        private readonly GoogleMapsService _mapsService;
+        private readonly GoogleTrafficService _mapsService;
         private readonly SearchService _searchService;
 
-        public MapsController(GoogleMapsService mapsService , SearchService searchService)
+        public MapsController(GoogleTrafficService mapsService , SearchService searchService)
         {
             _mapsService = mapsService;
             _searchService = searchService;

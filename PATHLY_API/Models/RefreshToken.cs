@@ -17,4 +17,3 @@ namespace PATHLY_API.Models
 
     }
 }
-

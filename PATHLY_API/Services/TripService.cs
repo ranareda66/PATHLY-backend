@@ -1,92 +1,578 @@
-﻿using PATHLY_API.Data;
+﻿//using PATHLY_API.Models;
+//using PATHLY_API.Dto;
+//using PATHLY_API.Models.Enums;
+//using Microsoft.EntityFrameworkCore;
+//using System.Security.Claims;
+//using Microsoft.AspNetCore.Http;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Threading.Tasks;
+//using PATHLY_API.Data;
+
+//namespace PATHLY_API.Services
+//{
+//    public class TripService
+//    {
+//        private readonly ApplicationDbContext _context;
+//        private readonly GoogleTripService _googleTripService;
+//        private readonly IRoadPredictionService _roadPredictionService;
+//        private readonly IHttpContextAccessor _httpContextAccessor;
+
+//        public TripService(
+//            ApplicationDbContext context,
+//            GoogleTripService googleTripService,
+//            IRoadPredictionService roadPredictionService,
+//            IHttpContextAccessor httpContextAccessor)
+//        {
+//            _context = context;
+//            _googleTripService = googleTripService;
+//            _roadPredictionService = roadPredictionService;
+//            _httpContextAccessor = httpContextAccessor;
+//        }
+
+//        public async Task<TripResultDto> StartTripWithCoordinatesAsync(
+//            double startLat, double startLng,
+//            double endLat, double endLng,
+//            bool requestRoadPrediction)
+//        {
+//            var userId = GetCurrentUserId();
+//            if (userId == null)
+//                throw new UnauthorizedAccessException("User not authenticated");
+
+//            ValidateCoordinates(startLat, startLng, endLat, endLng);
+
+//            var user = await _context.Users.FindAsync(userId)
+//                ?? throw new KeyNotFoundException("User not found");
+
+//            var (canAccessRoadPrediction, freeTripsRemaining) =
+//                await CheckRoadPredictionAccess(user.Id, requestRoadPrediction);
+
+//            var route = await _googleTripService.GetRouteBetweenCoordinatesAsync(
+//                startLat, startLng, endLat, endLng);
+
+//            var trip = new Trip
+//            {
+//                UserId = userId.Value,
+//                StartLatitude = startLat,
+//                StartLongitude = startLng,
+//                EndLatitude = endLat,
+//                EndLongitude = endLng,
+//                Distance = route.DistanceKm,
+//                RoutePolyline = route.Polyline,
+//                StartTime = DateTime.UtcNow,
+//                Status = TripStatus.InProgress,
+//                UsedRoadPrediction = canAccessRoadPrediction && requestRoadPrediction
+//            };
+
+//            if (requestRoadPrediction && !await HasActiveSubscription(userId.Value))
+//            {
+//                user.FreeTripsUsed++;
+//            }
+
+//            user.TripCount++;
+//            _context.Trips.Add(trip);
+//            await _context.SaveChangesAsync();
+
+//            List<ClusterGroup> roadPrediction = null;
+//            if (requestRoadPrediction && canAccessRoadPrediction)
+//            {
+//                roadPrediction = await _roadPredictionService.PredictRoadConditionAsync(
+//                    startLat, startLng, endLat, endLng);
+//            }
+
+//            return new TripResultDto
+//            {
+//                Trip = MapToTripDto(trip),
+//                Route = MapToRouteDto(route),
+//                RoadPrediction = roadPrediction,
+//                FreeTripsRemaining = freeTripsRemaining
+//            };
+//        }
+
+//        public async Task<bool> EndTripAsync(int tripId, int? feedback = null)
+//        {
+//            var trip = await GetValidTripAsync(tripId);
+
+//            if (trip.Status != TripStatus.InProgress)
+//                throw new InvalidOperationException("Only in-progress trips can be ended");
+
+//            trip.EndTime = DateTime.UtcNow;
+//            trip.Status = TripStatus.Completed;
+
+//            if (feedback.HasValue)
+//            {
+//                if (feedback < 1 || feedback > 5)
+//                    throw new ArgumentOutOfRangeException(nameof(feedback), "Feedback must be between 1 and 5");
+//                trip.FeedbackRate = feedback.Value;
+//            }
+
+//            _context.Trips.Update(trip);
+//            return await _context.SaveChangesAsync() > 0;
+//        }
+
+//        public async Task<bool> AbortTripAsync(int tripId)
+//        {
+//            var trip = await GetValidTripAsync(tripId);
+
+//            if (trip.Status != TripStatus.InProgress)
+//                throw new InvalidOperationException("Only in-progress trips can be aborted");
+
+//            trip.EndTime = DateTime.UtcNow;
+//            trip.Status = TripStatus.Cancelled;
+
+//            _context.Trips.Update(trip);
+//            return await _context.SaveChangesAsync() > 0;
+//        }
+
+//        public async Task<bool> DeleteTripAsync(int tripId)
+//        {
+//            var trip = await GetValidTripAsync(tripId);
+
+//            if (trip.Status != TripStatus.Cancelled)
+//                throw new InvalidOperationException("Only cancelled trips can be deleted");
+
+//            _context.Trips.Remove(trip);
+//            return await _context.SaveChangesAsync() > 0;
+//        }
+
+//        public async Task<List<TripDto>> GetUserTripsAsync(
+//            int userId,
+//            DateTime? startDate = null,
+//            TripStatus? status = null)
+//        {
+//            var query = _context.Trips
+//                .Where(t => t.UserId == userId)
+//                .AsQueryable();
+
+//            if (startDate.HasValue)
+//                query = query.Where(t => t.StartTime >= startDate.Value);
+
+//            if (status.HasValue)
+//                query = query.Where(t => t.Status == status.Value);
+
+//            return await query
+//                .OrderByDescending(t => t.StartTime)
+//                .Select(t => MapToTripDto(t))
+//                .ToListAsync();
+//        }
+
+//        public async Task<TripResponseDto> GetTripDetailsAsync(int tripId)
+//        {
+//            var trip = await _context.Trips
+//                .Include(t => t.User)
+//                .FirstOrDefaultAsync(t => t.Id == tripId)
+//                ?? throw new KeyNotFoundException("Trip not found");
+
+//            var userId = GetCurrentUserId();
+//            if (trip.UserId != userId)
+//                throw new UnauthorizedAccessException("You don't have permission to view this trip");
+
+//            return new TripResponseDto
+//            {
+//                Id = trip.Id,
+//                StartLatitude = trip.StartLatitude,
+//                StartLongitude = trip.StartLongitude,
+//                EndLatitude = trip.EndLatitude,
+//                EndLongitude = trip.EndLongitude,
+//                Distance = trip.Distance,
+//                RoutePolyline = trip.RoutePolyline,
+//                StartTime = trip.StartTime,
+//                EndTime = trip.EndTime,
+//                Status = trip.Status,
+//                FeedbackRate = trip.FeedbackRate,
+//                UsedRoadPrediction = trip.UsedRoadPrediction
+//            };
+//        }
+
+//        #region Private Methods
+
+//        private int? GetCurrentUserId()
+//        {
+//            var userIdClaim = _httpContextAccessor.HttpContext?.User
+//                .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+//            return int.TryParse(userIdClaim, out int userId) ? userId : null;
+//        }
+
+//        private void ValidateCoordinates(double startLat, double startLng, double endLat, double endLng)
+//        {
+//            if (startLat < -90 || startLat > 90 || endLat < -90 || endLat > 90)
+//                throw new ArgumentException("Latitude must be between -90 and 90");
+
+//            if (startLng < -180 || startLng > 180 || endLng < -180 || endLng > 180)
+//                throw new ArgumentException("Longitude must be between -180 and 180");
+
+//            if (startLat == endLat && startLng == endLng)
+//                throw new ArgumentException("Start and end coordinates cannot be identical");
+//        }
+
+//        private async Task<Trip> GetValidTripAsync(int tripId)
+//        {
+//            var trip = await _context.Trips
+//                .Include(t => t.User)
+//                .FirstOrDefaultAsync(t => t.Id == tripId)
+//                ?? throw new KeyNotFoundException("Trip not found");
+
+//            var userId = GetCurrentUserId();
+//            if (trip.UserId != userId)
+//                throw new UnauthorizedAccessException("You don't have permission to access this trip");
+
+//            return trip;
+//        }
+
+//        private async Task<(bool canAccess, int? freeTripsRemaining)> CheckRoadPredictionAccess(
+//            int userId, bool requestRoadPrediction)
+//        {
+//            if (!requestRoadPrediction)
+//                return (false, null);
+
+//            var hasActiveSubscription = await _context.UserSubscriptions
+//                .AnyAsync(us => us.UserId == userId &&
+//                               us.Status == SubscriptionStatus.Active &&
+//                               us.EndDate > DateTime.UtcNow);
+
+//            if (hasActiveSubscription)
+//                return (true, null);
+
+//            var user = await _context.Users.FindAsync(userId);
+//            var freeTripsRemaining = 5 - user.FreeTripsUsed;
+
+//            return (freeTripsRemaining > 0, freeTripsRemaining);
+//        }
+
+//        private async Task<bool> HasActiveSubscription(int userId)
+//        {
+//            return await _context.UserSubscriptions
+//                .AnyAsync(us => us.UserId == userId &&
+//                               us.Status == SubscriptionStatus.Active &&
+//                               us.EndDate > DateTime.UtcNow);
+//        }
+
+//        private TripDto MapToTripDto(Trip trip)
+//        {
+//            return new TripDto
+//            {
+//                Id = trip.Id,
+//                StartLatitude = trip.StartLatitude,
+//                StartLongitude = trip.StartLongitude,
+//                EndLatitude = trip.EndLatitude,
+//                EndLongitude = trip.EndLongitude,
+//                Distance = trip.Distance,
+//                RoutePolyline = trip.RoutePolyline,
+//                StartTime = trip.StartTime,
+//                EndTime = trip.EndTime,
+//                Status = trip.Status,
+//                UsedRoadPrediction = trip.UsedRoadPrediction
+//            };
+//        }
+
+//        private RouteDto MapToRouteDto(GoogleTripService.RouteResult route)
+//        {
+//            return new RouteDto
+//            {
+//                Polyline = route.Polyline,
+//                Steps = route.Steps.Select(s => new RouteStepDto
+//                {
+//                    Instruction = s.Instruction,
+//                    Distance = s.Distance,
+//                    Duration = s.Duration,
+//                    StartLatitude = s.StartLocation.Latitude,
+//                    StartLongitude = s.StartLocation.Longitude,
+//                    EndLatitude = s.EndLocation.Latitude,
+//                    EndLongitude = s.EndLocation.Longitude
+//                }).ToList(),
+//                DistanceKm = route.DistanceKm,
+//                Duration = route.Duration
+//            };
+//        }
+
+//        #endregion
+//    }
+//}
 using PATHLY_API.Models;
+using PATHLY_API.Dto;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using PATHLY_API.Data;
 using PATHLY_API.Models.Enums;
 
 namespace PATHLY_API.Services
 {
     public class TripService
     {
+        private const int FREE_TRIPS_LIMIT = 5;
         private readonly ApplicationDbContext _context;
-        private readonly GoogleMapsService _googleMapsService;
+        private readonly GoogleTripService _googleTripService;
+        private readonly IRoadPredictionService _roadPredictionService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<TripService> _logger;
 
-        public TripService(ApplicationDbContext context , GoogleMapsService googleMapsService)
+        public TripService(
+            ApplicationDbContext context,
+            GoogleTripService googleTripService,
+            IRoadPredictionService roadPredictionService,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<TripService> logger)
         {
             _context = context;
-            _googleMapsService = googleMapsService;
+            _googleTripService = googleTripService;
+            _roadPredictionService = roadPredictionService;
+            _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
-        public void StartTrip(int userId , string startLocation, string endLocation)
+
+        public async Task<TripResultDto> StartTripWithCoordinatesAsync(
+            double startLat, double startLng,
+            double endLat, double endLng,
+            bool requestRoadPrediction)
         {
-            if (string.IsNullOrWhiteSpace(startLocation) || string.IsNullOrWhiteSpace(endLocation))
-                throw new ArgumentException("Start and End locations cannot be empty.");
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            var distance = _googleMapsService.GetDistanceBetweenPlacesByName(startLocation, endLocation).Result;
-
-            var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user is null)
-                throw new Exception("User not found");
-
-            var trip = new Trip
+            try
             {
-                UserId = userId,
-                StartLocation = startLocation.Trim(),
-                EndLocation = endLocation.Trim(),
-                Distance = distance,
-                StartTime = DateTime.UtcNow,
-                Status = TripStatus.InProgress
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                    throw new UnauthorizedAccessException("User not authenticated");
+
+                var user = await _context.Users
+                    .Include(u => u.UserSubscriptions)
+                    .FirstOrDefaultAsync(u => u.Id == userId.Value)
+                    ?? throw new KeyNotFoundException("User not found");
+
+                // Get basic route information (always available)
+                var route = await _googleTripService.GetRouteBetweenCoordinatesAsync(
+                    startLat, startLng, endLat, endLng);
+
+                // Check road prediction access
+                var (canAccessRoadPrediction, freeTripsRemaining) =
+                    await CheckRoadPredictionAccess(user, requestRoadPrediction);
+
+                List<ClusterGroup> roadPrediction = null;
+                if (requestRoadPrediction && canAccessRoadPrediction)
+                {
+                    roadPrediction = await _roadPredictionService.PredictRoadConditionAsync(
+                        startLat, startLng, endLat, endLng);
+
+                    if (!await HasActiveSubscription(userId.Value))
+                    {
+                        user.FreeTripsUsed++;
+                        _logger.LogInformation("User {UserId} used free trip ({Remaining} remaining)",
+                            userId, FREE_TRIPS_LIMIT - user.FreeTripsUsed);
+                    }
+                }
+
+                // Create and save trip
+                var trip = new Trip
+                {
+                    UserId = userId.Value,
+                    StartLatitude = startLat,
+                    StartLongitude = startLng,
+                    EndLatitude = endLat,
+                    EndLongitude = endLng,
+                    Distance = route.DistanceKm,
+                    RoutePolyline = route.Polyline,
+                    StartTime = DateTime.UtcNow,
+                    Status = TripStatus.InProgress,
+                    UsedRoadPrediction = requestRoadPrediction && canAccessRoadPrediction
+                };
+
+                user.TripCount++;
+                _context.Trips.Add(trip);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new TripResultDto
+                {
+                    Trip = MapToTripDto(trip),
+                    Route = MapToRouteDto(route),
+                    RoadPrediction = roadPrediction,
+                    FreeTripsRemaining = freeTripsRemaining,
+                    RequiresSubscription = requestRoadPrediction && !canAccessRoadPrediction
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error starting trip");
+                throw;
+            }
+        }
+
+        private async Task<(bool canAccess, int? freeTripsRemaining)> CheckRoadPredictionAccess(
+            User user, bool requestRoadPrediction)
+        {
+            if (!requestRoadPrediction)
+                return (false, null);
+
+            if (await HasActiveSubscription(user.Id))
+                return (true, null); // Subscribed users have unlimited access
+
+            int remaining = FREE_TRIPS_LIMIT - user.FreeTripsUsed;
+            return (remaining > 0, remaining > 0 ? remaining : (int?)null);
+        }
+
+        private async Task<bool> HasActiveSubscription(int userId)
+        {
+            return await _context.UserSubscriptions
+                .AnyAsync(us => us.UserId == userId &&
+                               us.Status == SubscriptionStatus.Active &&
+                               us.EndDate > DateTime.UtcNow);
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User
+                .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(userIdClaim, out int userId) ? userId : null;
+        }
+
+        private TripDto MapToTripDto(Trip trip)
+        {
+            return new TripDto
+            {
+                Id = trip.Id,
+                StartLatitude = trip.StartLatitude,
+                StartLongitude = trip.StartLongitude,
+                EndLatitude = trip.EndLatitude,
+                EndLongitude = trip.EndLongitude,
+                Distance = trip.Distance,
+                RoutePolyline = trip.RoutePolyline,
+                StartTime = trip.StartTime,
+                EndTime = trip.EndTime,
+                Status = trip.Status.ToString(),
+                UsedRoadPrediction = trip.UsedRoadPrediction
             };
-
-            user.TripCount += 1;
-            _context.Trips.Add(trip);
-            _context.SaveChanges();
         }
 
-        public bool AbortTrip(int tripId)
+        private RouteDto MapToRouteDto(GoogleTripService.RouteResult route)
         {
-            var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip is null)
-                throw new KeyNotFoundException("Trip not found.");
-
-            if (trip.Status is TripStatus.Cancelled or TripStatus.Completed)
-                throw new InvalidOperationException("Cannot abort this trip.");
-
-            trip.EndTime = DateTime.UtcNow;
-            trip.Status = TripStatus.Cancelled;
-            
-            return _context.SaveChanges() > 0;
+            return new RouteDto
+            {
+                Polyline = route.Polyline,
+                Steps = route.Steps?.Select(s => new RouteStepDto
+                {
+                    Instruction = s.Instruction,
+                    Distance = s.Distance,
+                    Duration = s.Duration,
+                    StartLatitude = s.StartLocation.Latitude,
+                    StartLongitude = s.StartLocation.Longitude,
+                    EndLatitude = s.EndLocation.Latitude,
+                    EndLongitude = s.EndLocation.Longitude
+                }).ToList(),
+                DistanceKm = route.DistanceKm,
+                Duration = route.Duration
+            };
         }
 
-        public bool EndTrip(int tripId, int? feedback = null)
+        public async Task<bool> EndTripAsync(int tripId, int? feedback = null)
         {
-            var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip is null)
-                throw new KeyNotFoundException("Trip not found.");
+            var trip = await GetValidTripAsync(tripId);
 
-            if (trip.Status == TripStatus.Cancelled || trip.Status == TripStatus.Completed)
-                throw new InvalidOperationException("Cannot end this trip.");
+            if (trip.Status != TripStatus.InProgress)
+                throw new InvalidOperationException("Only in-progress trips can be ended");
 
             trip.EndTime = DateTime.UtcNow;
             trip.Status = TripStatus.Completed;
 
-            
-            if (feedback is >= 1 and <= 5)
+            if (feedback.HasValue)
+            {
+                if (feedback < 1 || feedback > 5)
+                    throw new ArgumentOutOfRangeException(nameof(feedback), "Feedback must be between 1 and 5");
                 trip.FeedbackRate = feedback.Value;
-            else if (feedback.HasValue)
-                throw new ArgumentOutOfRangeException(nameof(feedback), "Feedback must be between 1 and 5.");
+            }
 
-            return _context.SaveChanges() > 0;
+            _context.Trips.Update(trip);
+            return await _context.SaveChangesAsync() > 0;
         }
 
-        public bool DeleteTrip(int tripId)
+        private async Task<Trip> GetValidTripAsync(int tripId)
         {
-            var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip is null)
-                throw new KeyNotFoundException("Trip not found.");
+            var trip = await _context.Trips
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Id == tripId)
+                ?? throw new KeyNotFoundException($"Trip with ID {tripId} not found");
+
+            var userId = GetCurrentUserId();
+            if (userId == null || trip.UserId != userId)
+                throw new UnauthorizedAccessException("You don't have permission to access this trip");
+
+            return trip;
+        }
+        public async Task<bool> AbortTripAsync(int tripId)
+        {
+            var trip = await GetValidTripAsync(tripId);
+
+            if (trip.Status != TripStatus.InProgress)
+                throw new InvalidOperationException("Only in-progress trips can be aborted");
+
+            trip.EndTime = DateTime.UtcNow;
+            trip.Status = TripStatus.Cancelled;
+
+            _context.Trips.Update(trip);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteTripAsync(int tripId)
+        {
+            var trip = await GetValidTripAsync(tripId);
 
             if (trip.Status != TripStatus.Cancelled)
-                throw new InvalidOperationException("Only cancelled trips can be deleted.");
+                throw new InvalidOperationException("Only cancelled trips can be deleted");
 
             _context.Trips.Remove(trip);
-            return _context.SaveChanges() > 0;
+            return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<List<TripDto>> GetUserTripsAsync(
+            int userId,
+            DateTime? startDate = null,
+            TripStatus? status = null)
+        {
+            var query = _context.Trips
+                .Where(t => t.UserId == userId)
+                .AsQueryable();
+
+            if (startDate.HasValue)
+                query = query.Where(t => t.StartTime >= startDate.Value);
+
+            if (status.HasValue)
+                query = query.Where(t => t.Status == status.Value);
+
+            return await query
+                .OrderByDescending(t => t.StartTime)
+                .Select(t => MapToTripDto(t))
+                .ToListAsync();
+        }
+
+        public async Task<TripResponseDto> GetTripDetailsAsync(int tripId)
+        {
+            var trip = await _context.Trips
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Id == tripId)
+                ?? throw new KeyNotFoundException("Trip not found");
+
+            var userId = GetCurrentUserId();
+            if (trip.UserId != userId)
+                throw new UnauthorizedAccessException("You don't have permission to view this trip");
+
+            return new TripResponseDto
+            {
+                Id = trip.Id,
+                StartLatitude = trip.StartLatitude,
+                StartLongitude = trip.StartLongitude,
+                EndLatitude = trip.EndLatitude,
+                EndLongitude = trip.EndLongitude,
+                Distance = trip.Distance,
+                RoutePolyline = trip.RoutePolyline,
+                StartTime = trip.StartTime,
+                EndTime = trip.EndTime,
+                Status = trip.Status,
+                FeedbackRate = trip.FeedbackRate,
+                UsedRoadPrediction = trip.UsedRoadPrediction
+            };
+        }
+
     }
 }

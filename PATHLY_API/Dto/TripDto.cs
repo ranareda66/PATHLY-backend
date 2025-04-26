@@ -1,16 +1,16 @@
 ﻿using PATHLY_API.Models.Enums;
 
-namespace PATHLY_API.Dto
+public class TripDto
 {
-    public class TripDto
-    {
-        public int Id { get; set; }
-        public string StartLocation { get; set; }
-        public string EndLocation { get; set; }
-        public double Distance { get; set; }
-        public DateTime StartTime { get; set; } = DateTime.UtcNow;
-        public DateTime? EndTime { get; set; }
-        public TripStatus Status { get; set; }
-    }
-
+    public int Id { get; set; }
+    public double StartLatitude { get; set; }
+    public double StartLongitude { get; set; }
+    public double EndLatitude { get; set; }
+    public double EndLongitude { get; set; }
+    public double Distance { get; set; }
+    public string RoutePolyline { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public string Status { get; set; }
+    public bool UsedRoadPrediction { get; set; }
 }

@@ -42,10 +42,13 @@ namespace PATHLY_API
             builder.Services.AddHostedService<SubscriptionExpirationService>();
             builder.Services.AddScoped<IRoadService, RoadService>();
             builder.Services.AddHttpClient<GooglePlacesService>();
-            builder.Services.AddHttpClient<GoogleMapsService>();
-            builder.Services.AddScoped<GoogleMapsService>();
+            builder.Services.AddHttpClient<GoogleTrafficService>();
+            builder.Services.AddScoped<GoogleTrafficService>();
             builder.Services.AddHttpClient();
-			builder.Services.AddHttpClient<IRoadPredictionService, RoadPredictionService>();
+            builder.Services.AddHttpClient<GoogleTripService>();  // Changed from GoogleTrafficService
+            builder.Services.AddScoped<TripService>();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHttpClient<IRoadPredictionService, RoadPredictionService>();
 
 			builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {

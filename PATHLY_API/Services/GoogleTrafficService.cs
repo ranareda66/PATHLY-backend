@@ -2,12 +2,12 @@
 
 namespace PATHLY_API.Services
 {
-    public class GoogleMapsService
+    public class GoogleTrafficService
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
 
-        public GoogleMapsService(HttpClient httpClient , IConfiguration configuration)
+        public GoogleTrafficService(HttpClient httpClient , IConfiguration configuration)
         {
             _httpClient = httpClient;
             _apiKey = configuration["GoogleMaps:ApiKey"] ?? throw new ArgumentNullException("Google Maps API key is missing");

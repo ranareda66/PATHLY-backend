@@ -117,7 +117,6 @@ namespace PATHLY_API.Services
             if (userIdClaim is null || appUser is null)
                 return "User is not found.";
 
-
             var subscriptionPlan = await _context.SubscriptionPlans.FindAsync(subscriptionPlanId);
             if (subscriptionPlan is null)
                 throw new ArgumentNullException(nameof(subscriptionPlan), "Subscription plan not found.");
@@ -126,14 +125,11 @@ namespace PATHLY_API.Services
                 .Include(u => u.UserSubscriptions)
                 .FirstOrDefaultAsync(u => u.Id.ToString() == userIdClaim);
 
-
             if (appDbUser is null)
                 throw new Exception("User not found");
 
-
-            if (subscriptionPlan.DurationInMonths <= 0)
-                throw new ArgumentException("Subscription duration must be greater than zero.", nameof(subscriptionPlan.DurationInMonths));
-
+            // Reset free trips when subscribing
+            appDbUser.FreeTripsUsed = 0;
 
             var newSubscription = new UserSubscription
             {
@@ -147,9 +143,8 @@ namespace PATHLY_API.Services
             _context.UserSubscriptions.Add(newSubscription);
             await _context.SaveChangesAsync();
 
-            return "Subscription successfully created.";
+            return "Subscription successfully created. Your free trips have been reset.";
         }
-
         // Retrieve user's Trip Details
         public TripDto GetTripDetails(int tripId)
         {
@@ -159,12 +154,15 @@ namespace PATHLY_API.Services
 
             return new TripDto
             {
-                StartLocation = trip.StartLocation,
-                EndLocation = trip.EndLocation,
+                StartLatitude = trip.StartLatitude,
+                StartLongitude = trip.StartLongitude,
+
+                EndLatitude = trip.EndLatitude,
+                EndLongitude = trip.EndLongitude,
                 Distance = trip.Distance,
                 StartTime = trip.StartTime,
                 EndTime = trip.EndTime,
-                Status = trip.Status,
+                Status = trip.Status.ToString(),
             };
         }
 
@@ -183,11 +181,10 @@ namespace PATHLY_API.Services
                 .OrderByDescending(t => t.StartTime)
                 .Select(t => new TripDto
                 {
-                    StartLocation = t.StartLocation,
-                    EndLocation = t.EndLocation,
+                  
                     StartTime = t.StartTime,
                     Distance = t.Distance,
-                    Status = t.Status
+                    Status = t.Status.ToString()
                 })
                 .ToListAsync();
         }

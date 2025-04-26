@@ -151,12 +151,18 @@ namespace PATHLY_API.Services
                 .Select(t => new TripDto
                 {
                     Id = t.Id,
-                    StartLocation = t.StartLocation,
-                    EndLocation = t.EndLocation,
+                    StartLatitude = t.StartLatitude,
+                    StartLongitude = t.StartLongitude,
+                   
+                    EndLatitude = t.EndLatitude,
+                    EndLongitude = t.EndLongitude,
+                   
+
+
                     StartTime = t.StartTime,
                     EndTime = t.EndTime,
                     Distance = t.Distance,
-                    Status = t.Status
+                    Status = t.Status.ToString()
                 })
                 .ToListAsync();
         }
