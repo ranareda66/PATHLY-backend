@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace PATHLY_API.Controllers
 {
@@ -11,7 +12,7 @@ namespace PATHLY_API.Controllers
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreatePayment([FromForm] int subscriptionPlanId)
+        public async Task<IActionResult> CreateSubscription([FromForm] int subscriptionPlanId)
         {
             try
             {
@@ -20,9 +21,9 @@ namespace PATHLY_API.Controllers
                 if (user == null || !user.Identity.IsAuthenticated)
                     return Unauthorized("User is not authenticated");
 
-                var orderId = await _paymentService.CreatePaymentAsync(user, subscriptionPlanId);
+				await _paymentService.CreateSubscriptionAsync(user, subscriptionPlanId);
 
-                return Ok(new { OrderId = orderId, Message = "Payment order created successfully." });
+				return Ok(new {Message = "User Stored In DataBase successfully." });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -32,47 +33,14 @@ namespace PATHLY_API.Controllers
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception ex)
+			catch (DbUpdateException dbEx)
+			{
+				return StatusCode(500, $"Database Error: {dbEx.InnerException?.Message ?? dbEx.Message}");
+			}
+			catch (Exception ex)
             {
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-
-
-        [HttpPost("capture")]
-        public async Task<IActionResult> CapturePayment([FromForm] string orderId)
-        {
-            try
-            {
-                bool success = await _paymentService.CapturePaymentAsync(orderId);
-                return Ok(new { Success = success });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
-            }
-        }
-
-        [HttpPost("cancel")]
-		public async Task<IActionResult> CancelPayment([FromForm] string orderId)
-		{
-			try
-			{
-				bool success = await _paymentService.CancelPaymentAsync(orderId);
-				return Ok("Payment Canceled successfully.");
-			}
-			catch (KeyNotFoundException ex)
-			{
-				return NotFound(ex.Message);
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, new { Message = "An error occurred: " + ex.Message });
-			}
-		}
 	}
 }

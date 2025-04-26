@@ -23,7 +23,6 @@ namespace PATHLY_API
             // Add services to the container.
 
             builder.Services.Configure<Jwt>(builder.Configuration.GetSection("JWT"));
-            builder.Services.Configure<PayPalSettings>(builder.Configuration.GetSection("PayPal"));
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -35,7 +34,6 @@ namespace PATHLY_API
             builder.Services.AddScoped<ReportService>();
             builder.Services.AddScoped<SearchService>();
             builder.Services.AddScoped<PaymentService>();
-            builder.Services.AddScoped<PayPalService>();
             builder.Services.AddScoped<SubscriptionPlanService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
