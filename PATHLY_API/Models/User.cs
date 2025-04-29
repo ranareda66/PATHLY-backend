@@ -26,7 +26,6 @@ namespace PATHLY_API.Models
         public int FreeTripsUsed { get; set; }
         public SubscriptionStatus SubscriptionStatus { get; set; }
 
-        // Navigation properties
         [ForeignKey("Location")]
         public int? LocationId { get; set; }
         public virtual Location Location { get; set; }
@@ -38,6 +37,4 @@ namespace PATHLY_API.Models
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
         public virtual ICollection<UserSubscription> UserSubscriptions { get; set; }
     }
-
-  
 }

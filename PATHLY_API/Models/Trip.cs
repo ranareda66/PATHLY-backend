@@ -1,6 +1,6 @@
-﻿using PATHLY_API.Models.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PATHLY_API.Models.Enums;
 
 namespace PATHLY_API.Models
 {
@@ -11,16 +11,20 @@ namespace PATHLY_API.Models
         public int Id { get; set; }
 
         [Required]
-        public double StartLatitude { get; set; }
+        [Column(TypeName = "decimal(18,15)")]
+        public decimal StartLatitude { get; set; }
 
         [Required]
-        public double StartLongitude { get; set; }
+        [Column(TypeName = "decimal(18,15)")]
+        public decimal StartLongitude { get; set; }
 
         [Required]
-        public double EndLatitude { get; set; }
+        [Column(TypeName = "decimal(18,15)")]
+        public decimal EndLatitude { get; set; }
 
         [Required]
-        public double EndLongitude { get; set; }
+        [Column(TypeName = "decimal(18,15)")]
+        public decimal EndLongitude { get; set; }
 
         [Required]
         public double Distance { get; set; }
@@ -43,6 +47,4 @@ namespace PATHLY_API.Models
         public virtual User User { get; set; }
         public virtual ICollection<TripRoad> TripRoads { get; set; } = new List<TripRoad>();
     }
-
-
 }

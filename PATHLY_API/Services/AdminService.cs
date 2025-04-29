@@ -136,36 +136,36 @@ namespace PATHLY_API.Services
 
 
         // Retrieve user's Trip history with filtering and pagination
-        public async Task<List<TripDto>> GetUserTripsAsync(int userId, DateTime? StartTime, TripStatus? status)
-        {
-            var query = _context.Trips.Where(t => t.UserId == userId);
+        //public async Task<List<TripDto>> GetUserTripsAsync(int userId, DateTime? StartTime, TripStatus? status)
+        //{
+        //    var query = _context.Trips.Where(t => t.UserId == userId);
 
-            if (StartTime.HasValue)
-                query = query.Where(t => t.StartTime >= StartTime.Value);
+        //    if (StartTime.HasValue)
+        //        query = query.Where(t => t.StartTime >= StartTime.Value);
 
-            if (status.HasValue)
-                query = query.Where(t => t.Status == status.Value);
+        //    if (status.HasValue)
+        //        query = query.Where(t => t.Status == status.Value);
 
-            return await query
-                .OrderByDescending(t => t.StartTime)
-                .Select(t => new TripDto
-                {
-                    Id = t.Id,
-                    StartLatitude = t.StartLatitude,
-                    StartLongitude = t.StartLongitude,
+        //    return await query
+        //        .OrderByDescending(t => t.StartTime)
+        //        .Select(t => new TripDto
+        //        {
+        //            Id = t.Id,
+        //            StartLatitude = t.StartLatitude,
+        //            StartLongitude = t.StartLongitude,
                    
-                    EndLatitude = t.EndLatitude,
-                    EndLongitude = t.EndLongitude,
+        //            EndLatitude = t.EndLatitude,
+        //            EndLongitude = t.EndLongitude,
                    
 
 
-                    StartTime = t.StartTime,
-                    EndTime = t.EndTime,
-                    Distance = t.Distance,
-                    Status = t.Status.ToString()
-                })
-                .ToListAsync();
-        }
+        //            StartTime = t.StartTime,
+        //            EndTime = t.EndTime,
+        //            Distance = t.Distance,
+        //            Status = t.Status.ToString()
+        //        })
+        //        .ToListAsync();
+        //}
 
         // Add or update road data
         public async Task<bool> AddOrUpdateRoadAsync(RoadDto roadDto)

@@ -146,25 +146,25 @@ namespace PATHLY_API.Services
             return "Subscription successfully created. Your free trips have been reset.";
         }
         // Retrieve user's Trip Details
-        public TripDto GetTripDetails(int tripId)
-        {
-            var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
-            if (trip == null)
-                throw new KeyNotFoundException("Trip not found.");
+        //public TripDto GetTripDetails(int tripId)
+        //{
+        //    var trip = _context.Trips.FirstOrDefault(t => t.Id == tripId);
+        //    if (trip == null)
+        //        throw new KeyNotFoundException("Trip not found.");
 
-            return new TripDto
-            {
-                StartLatitude = trip.StartLatitude,
-                StartLongitude = trip.StartLongitude,
+        //    return new TripDto
+        //    {
+        //        StartLatitude = trip.StartLatitude,
+        //        StartLongitude = trip.StartLongitude,
 
-                EndLatitude = trip.EndLatitude,
-                EndLongitude = trip.EndLongitude,
-                Distance = trip.Distance,
-                StartTime = trip.StartTime,
-                EndTime = trip.EndTime,
-                Status = trip.Status.ToString(),
-            };
-        }
+        //        EndLatitude = trip.EndLatitude,
+        //        EndLongitude = trip.EndLongitude,
+        //        Distance = trip.Distance,
+        //        StartTime = trip.StartTime,
+        //        EndTime = trip.EndTime,
+        //        Status = trip.Status.ToString(),
+        //    };
+        //}
 
         // Retrieve user's Trip history with filtering and pagination
         public async Task<List<TripDto>> GetUserTripsAsync(int userId, DateTime? StartTime, TripStatus? status)

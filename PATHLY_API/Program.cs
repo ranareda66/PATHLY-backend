@@ -20,7 +20,7 @@ namespace PATHLY_API
 
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            
 
             builder.Services.Configure<Jwt>(builder.Configuration.GetSection("JWT"));
 
@@ -29,7 +29,6 @@ namespace PATHLY_API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<UserService>();
-            builder.Services.AddScoped<TripService>();
             builder.Services.AddScoped<AdminService>();
             builder.Services.AddScoped<ReportService>();
             builder.Services.AddScoped<SearchService>();
@@ -43,12 +42,15 @@ namespace PATHLY_API
             builder.Services.AddHttpClient<GoogleTrafficService>();
             builder.Services.AddScoped<GoogleTrafficService>();
             builder.Services.AddHttpClient();
-            builder.Services.AddHttpClient<GoogleTripService>();  // Changed from GoogleTrafficService
+            builder.Services.AddHttpClient<GoogleTripService>();
             builder.Services.AddScoped<TripService>();
+            builder.Services.AddScoped<ITripService, TripService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddHttpClient<IRoadPredictionService, RoadPredictionService>();
+          
+         
 
-			builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+            builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
             {
                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
             })

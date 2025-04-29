@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using PATHLY_API.Services;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PATHLY_API.Data;
 using PATHLY_API.Dto;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using PATHLY_API.Models.Enums;
+using PATHLY_API.Models;
+using PATHLY_API.Services;
 using System.Security.Claims;
+
+
+using PATHLY_API.Models.Enums;
+
 
 namespace PATHLY_API.Controllers
 {
@@ -13,15 +17,21 @@ namespace PATHLY_API.Controllers
     [Authorize]
     public class TripController : ControllerBase
     {
-        private readonly TripService _tripService;
+        private readonly ITripService _tripService;
         private readonly ILogger<TripController> _logger;
+        private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
         public TripController(
-            TripService tripService,
-            ILogger<TripController> logger)
+            ITripService tripService,
+            ILogger<TripController> logger,
+            ApplicationDbContext context,
+            IWebHostEnvironment env)
         {
             _tripService = tripService;
             _logger = logger;
+            _context = context;
+            _env = env;
         }
 
         [HttpPost("start")]
@@ -29,6 +39,19 @@ namespace PATHLY_API.Controllers
         {
             try
             {
+                // Validate coordinates
+                if (request.StartLatitude < -90 || request.StartLatitude > 90 ||
+                    request.StartLongitude < -180 || request.StartLongitude > 180 ||
+                    request.EndLatitude < -90 || request.EndLatitude > 90 ||
+                    request.EndLongitude < -180 || request.EndLongitude > 180)
+                {
+                    return BadRequest(new ErrorResponse
+                    {
+                        Message = "Invalid coordinates",
+                        Details = "Latitude must be between -90 and 90, Longitude between -180 and 180"
+                    });
+                }
+
                 var result = await _tripService.StartTripWithCoordinatesAsync(
                     request.StartLatitude,
                     request.StartLongitude,
@@ -55,7 +78,69 @@ namespace PATHLY_API.Controllers
                 return StatusCode(500, new ErrorResponse
                 {
                     Message = "An error occurred while processing your trip",
-                    ErrorCode = "TRIP_ERROR"
+                    ErrorCode = "TRIP_ERROR",
+                    Details = _env.IsDevelopment() ? ex.Message : null,
+                    StackTrace = _env.IsDevelopment() ? ex.StackTrace : null
+                });
+            }
+        }
+
+        [HttpGet("{tripId}/hazards")]
+        public async Task<IActionResult> GetUpcomingHazards(
+            int tripId,
+            [FromQuery] double currentLat,
+            [FromQuery] double currentLng)
+        {
+            try
+            {
+                // Validate coordinates
+                if (currentLat < -90 || currentLat > 90 || currentLng < -180 || currentLng > 180)
+                {
+                    return BadRequest(new ErrorResponse
+                    {
+                        Message = "Invalid coordinates",
+                        Details = "Latitude must be between -90 and 90, Longitude between -180 and 180"
+                    });
+                }
+
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var user = await _context.Users.FindAsync(userId);
+
+                if (user == null)
+                    return Unauthorized(new ErrorResponse { Message = "User not found" });
+
+                bool hasActiveSubscription = await _tripService.HasActiveSubscription(userId);
+
+                if (user.FreeTripsUsed >= TripService.FREE_TRIPS_LIMIT && !hasActiveSubscription)
+                {
+                    return Unauthorized(new ErrorResponse
+                    {
+                        Message = "Hazard notifications require a subscription",
+                        ErrorCode = "REQUIRES_SUBSCRIPTION",
+                        ActionRequired = "subscribe",
+                        SubscribeUrl = "/api/subscription/plans"
+                    });
+                }
+
+                var hazards = await _tripService.GetUpcomingHazards(tripId, currentLat, currentLng);
+                return Ok(hazards);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new ErrorResponse { Message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new ErrorResponse { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting hazards");
+                return StatusCode(500, new ErrorResponse
+                {
+                    Message = "An error occurred while getting hazards",
+                    Details = _env.IsDevelopment() ? ex.Message : null,
+                    StackTrace = _env.IsDevelopment() ? ex.StackTrace : null
                 });
             }
         }
@@ -75,15 +160,13 @@ namespace PATHLY_API.Controllers
             }
         }
 
-        
-        /// Aborts an ongoing trip
         [HttpPost("abort/{tripId}")]
         public async Task<IActionResult> AbortTrip(int tripId)
         {
             try
             {
                 var success = await _tripService.AbortTripAsync(tripId);
-                return Ok(new { Success = success, Message = "Trip aborted successfully" });
+                return Ok(new { Success = success });
             }
             catch (Exception ex)
             {
@@ -91,14 +174,13 @@ namespace PATHLY_API.Controllers
             }
         }
 
-        /// Deletes a cancelled trip
         [HttpDelete("{tripId}")]
         public async Task<IActionResult> DeleteTrip(int tripId)
         {
             try
             {
                 var success = await _tripService.DeleteTripAsync(tripId);
-                return Ok(new { Success = success, Message = "Trip deleted successfully" });
+                return Ok(new { Success = success });
             }
             catch (Exception ex)
             {
@@ -106,8 +188,6 @@ namespace PATHLY_API.Controllers
             }
         }
 
-      
-        /// Gets trip history for the authenticated user
         [HttpGet("history")]
         public async Task<IActionResult> GetTripHistory(
             [FromQuery] DateTime? startDate = null,
@@ -125,8 +205,6 @@ namespace PATHLY_API.Controllers
             }
         }
 
-       
-        /// Gets details for a specific trip
         [HttpGet("{tripId}")]
         public async Task<IActionResult> GetTripDetails(int tripId)
         {
@@ -141,10 +219,10 @@ namespace PATHLY_API.Controllers
             }
         }
 
-
-
         private IActionResult HandleException(Exception ex)
         {
+            _logger.LogError(ex, "Error in TripController");
+
             return ex switch
             {
                 UnauthorizedAccessException => Unauthorized(new ErrorResponse
@@ -170,17 +248,24 @@ namespace PATHLY_API.Controllers
                 _ => StatusCode(500, new ErrorResponse
                 {
                     Message = "An unexpected error occurred",
-                    ErrorCode = "INTERNAL_ERROR"
+                    ErrorCode = "INTERNAL_ERROR",
+                    Details = _env.IsDevelopment() ? ex.Message : null,
+                    StackTrace = _env.IsDevelopment() ? ex.StackTrace : null
                 })
             };
         }
     }
-
+}
+namespace PATHLY_API.Dto
+{
     public class ErrorResponse
     {
         public string Message { get; set; }
         public string ErrorCode { get; set; }
         public string ActionRequired { get; set; }
         public string SubscribeUrl { get; set; }
+
+        public string Details { get; set; }
+        public string StackTrace { get; set; }
     }
 }
