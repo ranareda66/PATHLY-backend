@@ -1,6 +1,6 @@
 ﻿using PATHLY_API.Models;
 
-namespace PATHLY_API.Services.AuthServices
+namespace PATHLY_API.Interfaces
 {
     public interface IAuthService
     {

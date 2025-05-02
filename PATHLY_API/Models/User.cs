@@ -12,7 +12,6 @@ namespace PATHLY_API.Models
             CreatedAt = DateTime.UtcNow;
             IsActive = true;
             Trips = new List<Trip>();
-            Payments = new List<Payment>();
             Searchs = new List<Search>();
             Reports = new List<Report>();
             RefreshTokens = new List<RefreshToken>();
@@ -28,10 +27,8 @@ namespace PATHLY_API.Models
 
         [ForeignKey("Location")]
         public int? LocationId { get; set; }
-        public virtual Location Location { get; set; }
 
         public virtual ICollection<Trip> Trips { get; set; }
-        public virtual ICollection<Payment> Payments { get; set; }
         public virtual ICollection<Search> Searchs { get; set; }
         public virtual ICollection<Report> Reports { get; set; }
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }

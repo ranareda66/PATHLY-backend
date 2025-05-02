@@ -78,6 +78,7 @@ namespace PATHLY_API.Services
                 Image = report.Image
             };
         }
+
         private async Task<Image> UploadImageAsync(int reportId, IFormFile file)
         {
 

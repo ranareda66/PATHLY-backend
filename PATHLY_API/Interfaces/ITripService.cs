@@ -2,7 +2,7 @@
 using PATHLY_API.Models;
 using PATHLY_API.Models.Enums;
 
-namespace PATHLY_API.Services
+namespace PATHLY_API.Interfaces
 {
     public interface ITripService
     {

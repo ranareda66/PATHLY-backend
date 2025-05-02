@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PATHLY_API.Interfaces;
 using PATHLY_API.Models;
-using PATHLY_API.Services;
 
 namespace PATHLY_API.Controllers
 {
-	[Route("api/[controller]")]
+    [Route("api/[controller]")]
 	[ApiController]
 	public class RoadPredictionController : ControllerBase
 	{

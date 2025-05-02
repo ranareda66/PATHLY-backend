@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PATHLY_API.Services;
+using PATHLY_API.Interfaces;
 
 [ApiController]
 [Route("api/[controller]")]

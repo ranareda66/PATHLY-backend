@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using PATHLY_API.Data;
+using PATHLY_API.Interfaces;
 
 namespace PATHLY_API.Services
 {

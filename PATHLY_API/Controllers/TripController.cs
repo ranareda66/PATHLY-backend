@@ -8,6 +8,7 @@ using System.Security.Claims;
 
 
 using PATHLY_API.Models.Enums;
+using PATHLY_API.Interfaces;
 
 
 namespace PATHLY_API.Controllers

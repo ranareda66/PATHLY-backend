@@ -1,7 +1,8 @@
 ﻿using System.Net.Mail;
 using System.Net;
+using PATHLY_API.Interfaces;
 
-namespace PATHLY_API.Services.EmailServices
+namespace PATHLY_API.Services
 {
     public class EmailService : IEmailService
     {

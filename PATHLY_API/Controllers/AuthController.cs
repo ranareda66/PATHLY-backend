@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PATHLY_API.Interfaces;
 using PATHLY_API.Models;
-using PATHLY_API.Services.AuthServices;
 
 namespace PATHLY_API.Controllers
 {

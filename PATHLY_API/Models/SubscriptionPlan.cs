@@ -25,8 +25,6 @@ namespace PATHLY_API.Models
 		public string Description { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
-        [JsonIgnore]
         public virtual ICollection<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>(); // ✅ دعم Lazy Loading
 
 

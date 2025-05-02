@@ -10,15 +10,10 @@ namespace PATHLY_API.Data
         public ApplicationDbContext() { }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
         public DbSet<Admin> Admins { get; set; }
-        public DbSet<Road> Roads { get; set; }
         public DbSet<Trip> Trips { get; set; }
         public DbSet<Image> Images { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<Search> Searchs { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<Location> Locations { get; set; }
-        public DbSet<RoadAnomaly> RoadAnomalies { get; set; }
-        public DbSet<QualityMetric> QualityMetrics { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
         public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
@@ -51,38 +46,12 @@ namespace PATHLY_API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
 
-            // Road - RoadAnomalies Relationship
-            modelBuilder.Entity<Road>()
-                .HasMany(r => r.RoadAnomalies)
-                .WithOne(a => a.Road)
-                .HasForeignKey(a => a.RoadId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-
             // User - Search Relationship
             modelBuilder.Entity<Search>()
                 .HasOne(s => s.User)
                 .WithMany(u => u.Searchs) 
                 .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            // Create Composite Key For TripRoad Class
-            modelBuilder.Entity<TripRoad>()
-                .HasKey(tr => new { tr.RoadId, tr.TripId });
-
-            // Trip - TripRoad Relationship
-            modelBuilder.Entity<Trip>()
-                .HasMany(t => t.TripRoads)
-                .WithOne(r => r.Trip)
-                .HasForeignKey(r => r.TripId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Road - TripRoad Relationship
-            modelBuilder.Entity<Road>()
-                .HasMany(t => t.TripRoads)
-                .WithOne(r => r.Road)
-                .HasForeignKey(r => r.RoadId)
-                .OnDelete(DeleteBehavior.Restrict);
 
 
             // Report - Image Relationship
@@ -99,19 +68,6 @@ namespace PATHLY_API.Data
                  .HasForeignKey(r => r.UserId)
                  .OnDelete(DeleteBehavior.Restrict);
 
-            // User - Location Relationship
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Location)
-                .WithOne(l => l.User)
-                .HasForeignKey<Location>(l => l.UserId) 
-                .OnDelete(DeleteBehavior.Cascade);
-
-
-            // Road - QualityMetric Relationship
-            modelBuilder.Entity<Road>()
-                    .HasOne(r => r.QualityMetric)
-                    .WithOne(q => q.Road)
-                    .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

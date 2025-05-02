@@ -1,10 +1,11 @@
-﻿using PATHLY_API.Models;
+﻿using PATHLY_API.Interfaces;
+using PATHLY_API.Models;
 using System.Text;
 using System.Text.Json;
 
 namespace PATHLY_API.Services
 {
-	public class RoadPredictionService : IRoadPredictionService
+    public class RoadPredictionService : IRoadPredictionService
 	{
 		private readonly HttpClient _httpClient;
 		private readonly string _aiApiUrl = "https://ai-model-production.up.railway.app/predict_in_range";

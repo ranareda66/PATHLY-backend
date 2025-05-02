@@ -1,4 +1,4 @@
-﻿namespace PATHLY_API.Services
+﻿namespace PATHLY_API.Interfaces
 {
     public interface IRoadService
     {

@@ -3,11 +3,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PATHLY_API.Data;
+using PATHLY_API.Interfaces;
 using PATHLY_API.JWT;
 using PATHLY_API.Models;
 using PATHLY_API.Services;
-using PATHLY_API.Services.AuthServices;
-using PATHLY_API.Services.EmailServices;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -110,12 +109,12 @@ namespace PATHLY_API
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            //if (app.Environment.IsDevelopment())
+            //{
+            //}
 
+            app.UseSwagger();
+            app.UseSwaggerUI();
             app.UseCookiePolicy();
             app.UseHttpsRedirection();
             app.UseAuthentication();

@@ -1,20 +1,19 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PATHLY_API.Data;
+using PATHLY_API.Interfaces;
 using PATHLY_API.JWT;
 using PATHLY_API.Models;
-using PATHLY_API.Services.EmailServices;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace PATHLY_API.Services.AuthServices
+namespace PATHLY_API.Services
 {
-    public class AuthService : IAuthService 
+    public class AuthService : IAuthService
     {
         private readonly UserManager<User> _userManager;
         private readonly Jwt _jwt;
@@ -128,7 +127,7 @@ namespace PATHLY_API.Services.AuthServices
                new Claim(JwtRegisteredClaimNames.Email, user.Email),
                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                new Claim("isAdmin", (user is Admin).ToString())
-			}
+            }
             .Union(userClaims);
 
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
@@ -198,21 +197,21 @@ namespace PATHLY_API.Services.AuthServices
             if (user is null)
                 return "User not found.";
 
-           
+
             var code = new Random().Next(100000, 999999).ToString();
 
-           
+
             var resetCode = new PasswordResetCode
             {
                 Email = email,
                 Code = code,
-                ExpirationTime = DateTime.UtcNow.AddMinutes(10) 
+                ExpirationTime = DateTime.UtcNow.AddMinutes(10)
             };
 
             _context.PasswordResetCodes.Add(resetCode);
             await _context.SaveChangesAsync();
 
-            
+
             await _emailService.SendEmailAsync(email, "Password Reset Code", $"Your password reset code is: {code}");
 
             return "Password reset code has been sent to your email.";
