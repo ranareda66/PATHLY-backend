@@ -28,17 +28,30 @@ namespace PATHLY_API.Services
 				var json = JsonDocument.Parse(content);
 				var places = json.RootElement.GetProperty("results")
 					.EnumerateArray()
-					.Select(place => new
+					.Select(place =>
 					{
-						name = place.GetProperty("name").GetString(),
-						address = place.TryGetProperty("vicinity", out var vicinity) ? vicinity.GetString() : "",
-						rating = place.TryGetProperty("rating", out var rating) ? rating.GetDouble() : 0,
-						location = new
+						var photoReference = place.TryGetProperty("photos", out var photos) && photos.GetArrayLength() > 0
+							? photos[0].GetProperty("photo_reference").GetString()
+							: null;
+
+						var photoUrl = photoReference != null
+							? $"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photoReference}&key={apiKey}"
+							: null;
+
+						return new
 						{
-							lat = place.GetProperty("geometry").GetProperty("location").GetProperty("lat").GetDouble(),
-							lng = place.GetProperty("geometry").GetProperty("location").GetProperty("lng").GetDouble()
-						}
+							name = place.GetProperty("name").GetString(),
+							address = place.TryGetProperty("vicinity", out var vicinity) ? vicinity.GetString() : "",
+							rating = place.TryGetProperty("rating", out var rating) ? rating.GetDouble() : 0,
+							location = new
+							{
+								lat = place.GetProperty("geometry").GetProperty("location").GetProperty("lat").GetDouble(),
+								lng = place.GetProperty("geometry").GetProperty("location").GetProperty("lng").GetDouble()
+							},
+							photo = photoUrl
+						};
 					});
+
 
 				var simplifiedJson = JsonSerializer.Serialize(places);
 				return simplifiedJson;
