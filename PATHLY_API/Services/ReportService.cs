@@ -1,11 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PATHLY_API.Data;
-using PATHLY_API.Dto;
 using PATHLY_API.Models;
-using PATHLY_API.Models.Enums;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -23,7 +18,7 @@ namespace PATHLY_API.Services
         }
 
         // Create Report from user ✅
-        public async Task<Report> CreateReportAsync(ReportRequestModel request, ClaimsPrincipal user)
+        public async Task<String> CreateReportAsync(ReportRequestModel request, ClaimsPrincipal user)
         {
 
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -49,7 +44,7 @@ namespace PATHLY_API.Services
             if (request.Image is not null && request.Image.Length > 0)
                 await UploadImageAsync(report.Id, request.Image);
 
-            return report;
+            return $"Report is sent successfully.";
         }
 
         // Search for Report By ID ✅
