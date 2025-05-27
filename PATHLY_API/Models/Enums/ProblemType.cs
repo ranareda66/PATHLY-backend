@@ -3,9 +3,11 @@
 namespace PATHLY_API.Models.Enums
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum SubscriptionStatus
+    public enum ProblemType
     {
-        Active,
-        Expired
+        Pothole,
+        Crack,
+        Bump,
+        Other
     }
 }

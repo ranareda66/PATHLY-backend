@@ -2,6 +2,7 @@
 
 namespace PATHLY_API.Models.Enums
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ReportStatus
     {
         Pending,

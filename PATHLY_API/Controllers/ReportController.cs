@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PATHLY_API.Models;
-using PATHLY_API.Models.Enums;
 using PATHLY_API.Services;
 
 namespace PATHLY_API.Controllers
@@ -20,8 +18,8 @@ namespace PATHLY_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var createdReport = await _reportService.CreateReportAsync(request, User);
-            return CreatedAtAction(nameof(GetReportById), new { reportId = createdReport.Id }, createdReport);
+            var result = await _reportService.CreateReportAsync(request, User);
+            return Ok(result);
         }
 
         // Return a specific report using ID ✅

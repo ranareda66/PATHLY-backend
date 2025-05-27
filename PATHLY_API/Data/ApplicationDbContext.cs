@@ -30,6 +30,22 @@ namespace PATHLY_API.Data
             modelBuilder.Entity<UserSubscription>()
             .HasIndex(us => new { us.UserId, us.SubscriptionPlanId });
 
+            modelBuilder.Entity<Report>()
+            .Property(u => u.Status)
+            .HasConversion<string>();
+            
+            modelBuilder.Entity<Report>()
+            .Property(u => u.ReportType)
+            .HasConversion<string>();
+            
+            modelBuilder.Entity<UserSubscription>()
+            .Property(u => u.Status)
+            .HasConversion<string>();
+        
+            modelBuilder.Entity<Trip>()
+            .Property(u => u.Status)
+            .HasConversion<string>();
+
             // User - User Subscription Relationship
             modelBuilder.Entity<UserSubscription>()
             .HasOne(us => us.User)
