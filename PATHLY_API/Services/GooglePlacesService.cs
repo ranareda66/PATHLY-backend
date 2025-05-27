@@ -40,15 +40,15 @@ namespace PATHLY_API.Services
 
 						return new
 						{
-							name = place.GetProperty("name").GetString(),
-							address = place.TryGetProperty("vicinity", out var vicinity) ? vicinity.GetString() : "",
-							rating = place.TryGetProperty("rating", out var rating) ? rating.GetDouble() : 0,
-							location = new
+							Name = place.GetProperty("name").GetString(),
+							Address = place.TryGetProperty("vicinity", out var vicinity) ? vicinity.GetString() : "",
+							Rating = place.TryGetProperty("rating", out var rating) ? rating.GetDouble() : 0,
+							Location = new
 							{
 								lat = place.GetProperty("geometry").GetProperty("location").GetProperty("lat").GetDouble(),
 								lng = place.GetProperty("geometry").GetProperty("location").GetProperty("lng").GetDouble()
 							},
-							photo = photoUrl
+							Photo = photoUrl
 						};
 					});
 
